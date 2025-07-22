@@ -1,3 +1,4 @@
+-- lua/plugins/core/init.lua
 local M = {}
 
 local plugins = {
@@ -6,17 +7,13 @@ local plugins = {
 
 function M.setup()
   local plugin_manager = require("utils.plugin-manager")
-  
+
   for _, name in ipairs(plugins) do
     local plugin = require("plugins.core." .. name)
-    
-    -- Ensure plugin is available
-    plugin_manager.ensure(plugin.spec)
-    
-    -- Setup plugin
-    plugin.setup()
+
+    -- Use the enhanced ensure_and_setup function
+    plugin_manager.ensure_and_setup(plugin)
   end
 end
 
 return M
-
