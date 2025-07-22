@@ -3,22 +3,55 @@ local M = {}
 
 M.plugin_dir = vim.fn.stdpath("data") .. "/plugins"
 
+-- Function to resolve plugin URL based on spec and environment variables
+local function resolve_plugin_url(spec)
+  -- If URL is explicitly provided, use it
+  if spec.url then
+    return spec.url
+  end
+
+  -- Get the default repository from environment variable
+  local default_repo = vim.env.NVIM_DEFAULT_PLUGIN_REPOSITORY
+
+  -- If default repo is set, use it
+  if default_repo then
+    -- Remove trailing slash if present
+    default_repo = default_repo:gsub("/$", "")
+    return default_repo .. "/" .. spec.plugin
+  end
+
+  -- Fallback to GitHub
+  return "https://github.com/" .. spec.plugin
+end
+
 -- Simple function to ensure plugin is cloned and added to rtp
 function M.ensure(spec)
+  -- Validate required fields
+  if not spec.plugin then
+    vim.notify("✗ Plugin spec missing required 'plugin' field", vim.log.levels.ERROR)
+    return false
+  end
+
+  if not spec.name then
+    vim.notify("✗ Plugin spec missing required 'name' field", vim.log.levels.ERROR)
+    return false
+  end
+
   local plugin_path = M.plugin_dir .. "/" .. spec.name
+  local plugin_url = resolve_plugin_url(spec)
 
   -- Clone if doesn't exist
   if vim.fn.isdirectory(plugin_path) == 0 then
-    vim.notify("Installing " .. spec.name .. "...", vim.log.levels.INFO)
+    vim.notify("Installing " .. spec.plugin .. "...", vim.log.levels.INFO)
 
-    local cmd = string.format("git clone --depth=1 %s %s", spec.url, plugin_path)
+    local cmd = string.format("git clone --depth=1 %s %s", plugin_url, plugin_path)
     local result = vim.fn.system(cmd)
 
     -- Check if clone was successful
     if vim.v.shell_error == 0 then
-      vim.notify("✓ " .. spec.name .. " installed successfully", vim.log.levels.INFO)
+      vim.notify("✓ " .. spec.plugin .. " installed successfully", vim.log.levels.INFO)
     else
-      vim.notify("✗ Failed to install " .. spec.name .. ": " .. result, vim.log.levels.ERROR)
+      vim.notify("✗ Failed to install " .. spec.plugin .. " from " .. plugin_url .. ": " .. result, vim.log.levels.ERROR)
       return false
     end
   end
@@ -46,6 +79,7 @@ function M.setup(plugin_def, user_config)
 
   -- Call the main plugin setup if specified
   if plugin_def.name then
+      -- String format: require the module and call setup
       require(plugin_def.name).setup(config)
   end
 
