@@ -12,11 +12,9 @@ local function resolve_plugin_url(spec)
 
   local overrides = {}
   local ok, override_module = pcall(require, "plugins.overrides")
-  vim.notify("Loading overrides... " .. vim.inspect(ok), vim.log.levels.INFO)
   if ok then
     overrides = override_module
   end
-  vim.notify("Set overrides " .. vim.inspect(overrides), vim.log.levels.INFO)
   -- Get the default repository from environment variable
   local default_repo = vim.env.NVIM_DEFAULT_PLUGIN_REPOSITORY
 

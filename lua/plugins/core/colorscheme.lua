@@ -1,7 +1,7 @@
 return {
+    "catppuccin/nvim",
     spec = {
         name="catppuccin",
-        plugin="catppuccin/nvim",
     },
     config = {
         flavour = "mocha",
