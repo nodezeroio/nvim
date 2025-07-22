@@ -3,6 +3,20 @@ local M = {}
 
 M.plugin_dir = vim.fn.stdpath("data") .. "/plugins"
 
+local function normalize_plugin_spec(plugin_def)
+  -- If the first element is a string, it's the plugin identifier (LazyVim style)
+  if type(plugin_def[1]) == "string" then
+    if not plugin_def.spec then
+        plugin_def.spec = {}
+    end
+    plugin_def.spec.plugin = plugin_def[1]
+    if not plugin_def.spec.name then
+      plugin_def.spec.name = plugin_def.spec.plugin:match("([^/]+)$") -- Extract repo name from "owner/repo"
+    end
+  else
+    error("Invalid plugin definition: missing plugin identifier")
+  end
+end
 -- Function to resolve plugin URL based on spec and environment variables
 local function resolve_plugin_url(spec)
   -- If URL is explicitly provided, use it
@@ -96,6 +110,8 @@ end
 
 -- Convenience function that ensures plugin and sets it up in one call
 function M.ensure_and_setup(plugin_def, user_config)
+  -- Normalize the plugin definition to extract spec
+  normalize_plugin_spec(plugin_def)
   if M.ensure(plugin_def.spec) then
     M.setup(plugin_def, user_config)
     return true
