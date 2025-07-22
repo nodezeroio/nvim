@@ -2,7 +2,6 @@ return {
     spec = {
         name="catppuccin",
         plugin="catppuccin/nvim",
-        url = "https://github.com/thomasbellio/catppuccin-nvim",
     },
     config = {
         flavour = "mocha",

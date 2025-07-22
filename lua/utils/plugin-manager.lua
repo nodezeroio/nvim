@@ -10,6 +10,13 @@ local function resolve_plugin_url(spec)
     return spec.url
   end
 
+  local overrides = {}
+  local ok, override_module = pcall(require, "plugins.overrides")
+  vim.notify("Loading overrides... " .. vim.inspect(ok), vim.log.levels.INFO)
+  if ok then
+    overrides = override_module
+  end
+  vim.notify("Set overrides " .. vim.inspect(overrides), vim.log.levels.INFO)
   -- Get the default repository from environment variable
   local default_repo = vim.env.NVIM_DEFAULT_PLUGIN_REPOSITORY
 
@@ -17,11 +24,11 @@ local function resolve_plugin_url(spec)
   if default_repo then
     -- Remove trailing slash if present
     default_repo = default_repo:gsub("/$", "")
-    return default_repo .. "/" .. spec.plugin
+    return default_repo .. "/" .. overrides[spec.plugin] or spec.plugin
   end
 
   -- Fallback to GitHub
-  return "https://github.com/" .. spec.plugin
+  return "https://github.com/" .. overrides[spec.plugin] or spec.plugin
 end
 
 -- Simple function to ensure plugin is cloned and added to rtp
