@@ -25,7 +25,7 @@ local function resolve_plugin_url(spec)
   end
 
   local overrides = {}
-  local ok, override_module = pcall(require, "plugins.overrides")
+  local ok, override_module = pcall(require, "profiles.overrides")
   if ok then
     overrides = override_module
   end
