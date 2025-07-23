@@ -1,1 +1,1 @@
-require("plugins.core").setup()
+require("plugins").setup()

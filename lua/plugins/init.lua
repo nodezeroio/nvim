@@ -7,7 +7,6 @@ local plugins = {
 
 function M.setup()
   local plugin_manager = require("utils.plugin-manager")
-
   for _, name in ipairs(plugins) do
     local plugin = require("plugins.core." .. name)
 
