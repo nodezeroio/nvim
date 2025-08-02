@@ -36,11 +36,11 @@ local function resolve_plugin_url(spec)
   if default_repo then
     -- Remove trailing slash if present
     default_repo = default_repo:gsub("/$", "")
-    return default_repo .. "/" .. overrides[spec.plugin] or spec.plugin
+    return default_repo .. "/" .. (overrides[spec.plugin] or spec.plugin)
   end
 
   -- Fallback to GitHub
-  return "https://github.com/" .. overrides[spec.plugin] or spec.plugin
+  return "https://github.com/" ..  (overrides[spec.plugin] or spec.plugin)
 end
 
 -- Simple function to ensure plugin is cloned and added to rtp
@@ -81,39 +81,33 @@ function M.ensure(spec)
 end
 
 -- Enhanced setup function that handles configuration merging and hooks
-function M.setup(plugin_def, user_config)
-  local config = {}
-
-  -- Merge default config with user config if both exist
-  if plugin_def.config then
-    config = vim.tbl_deep_extend("force", plugin_def.config, user_config or {})
-  elseif user_config then
-    config = user_config
-  end
-
+function M.setup(plugin_def)
+  local options = plugin_def.options
   -- Execute pre-setup hook if it exists
   if plugin_def.preSetup then
-    plugin_def.preSetup(config)
+    plugin_def.preSetup(plugin_def)
   end
 
   -- Call the main plugin setup if specified
-  if plugin_def.name then
+  if plugin_def.config and type(plugin_def.config) == "function" then
+     plugin_def.config(plugin_def)
+  elseif plugin_def.name then
       -- String format: require the module and call setup
-      require(plugin_def.name).setup(config)
+      require(plugin_def.name).setup(options)
   end
 
   -- Execute post-setup hook if it exists
   if plugin_def.postSetup then
-    plugin_def.postSetup(config)
+    plugin_def.postSetup(plugin_def)
   end
 end
 
 -- Convenience function that ensures plugin and sets it up in one call
-function M.ensure_and_setup(plugin_def, user_config)
+function M.ensure_and_setup(plugin_def)
   -- Normalize the plugin definition to extract spec
   normalize_plugin_spec(plugin_def)
   if M.ensure(plugin_def.spec) then
-    M.setup(plugin_def, user_config)
+    M.setup(plugin_def)
     return true
   end
   return false
