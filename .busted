@@ -1,0 +1,12 @@
+return {
+  _all = {
+    coverage = true,
+    ROOT={"tests"}
+  },
+  default = {
+    verbose = true
+  },
+  unit = {
+    ROOT={"tests/unit"}
+  }
+}
