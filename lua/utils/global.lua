@@ -8,13 +8,13 @@ _G.NodeZeroVim = {}
 -- Core utility functions
 NodeZeroVim.utils = {}
 
+NodeZeroVim.utils.profiles = profileUtils
 -- Configuration and state
 NodeZeroVim.config = {
   plugin_dir = vim.fn.stdpath("data") .. "/plugins",
   profiles = {},
 }
 
-NodeZeroVim.profileUtils = profileUtils
 
 -- Debug utilities
 NodeZeroVim.debug = {}
