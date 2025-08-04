@@ -8,6 +8,7 @@ _G.NodeZeroVim = {}
 -- Core utility functions
 NodeZeroVim.utils = {}
 
+function NodeZeroVim.utils.ensurePath(path) end
 NodeZeroVim.utils.profiles = profileUtils
 -- Configuration and state
 NodeZeroVim.config = {
