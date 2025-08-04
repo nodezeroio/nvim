@@ -11,10 +11,6 @@ return {
                 dark = "mocha",
             },
         },
-        integrations = {
-            treesitter = true,
-            telescope = true,
-        },
         postSetup = function(pluginDef)
             vim.cmd.colorscheme("catppuccin")
         end

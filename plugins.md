@@ -9,20 +9,21 @@ This Neovim configuration uses a custom, lightweight plugin management system de
 ### Directory Structure
 
 ```
-$HOME/.config/thomas.nvim/
-├── lua/
-│   ├── plugins/
-│   │   ├── core/              # Always loaded plugins
-│   │   │   ├── init.lua       # Core plugin loader
-│   │   │   ├── colorscheme.lua
-│   │   │   ├── treesitter.lua
-│   │   │   └── ...
-│   │   └── profiles/          # Profile-specific plugins
-│   │       ├── dotnet/
-│   │       ├── typescript/
-│   │       └── ...
-│   └── utils/
-│       └── plugin-manager.lua # Simple plugin manager
+$HOME/.config/thomas.nvim/lua
+.
+├── profiles
+│   ├── core
+│   │   ├── config
+│   │   │   ├── autocmds.lua
+│   │   │   ├── init.lua
+│   │   │   ├── keymaps.lua
+│   │   │   └── options.lua
+│   │   └── plugins.lua
+│   ├── init.lua
+│   └── overrides.lua
+└── utils
+    ├── global.lua
+    └── plugin-manager.lua
 ```
 
 ### Plugin Storage
@@ -50,12 +51,37 @@ This function:
 
 ### Plugin Specification Format
 
-Each plugin needs a `spec` table with:
+Each plugin is configured as follows:
 
 ```lua
-M.spec = {
-  url = "https://github.com/owner/repo-name",  -- Git repository URL
-  name = "plugin-directory-name"              -- Directory name for the plugin
+M.plugin_def = {
+    {
+        "catppuccin/nvim", -- the plugin path on the repository, for example catppuccin/nvim would correspond to ${NVIM_PLUGIN_REPOSITORY}/catppucin/nvim
+        spec = {
+            name="catppuccin", -- optional parameter, if name is specified the plugin will be cloned at, if not specified it will be cloned at a normalized path based on the repository path. For example if spec.name is not specified it will be cloned and the plugin path is 'catppuccin/nvim' it will be cloned at `catppucin-nvim` `
+        },
+        options = {  -- This is the plugin configuration options specified by the plugin in question
+            flavour = "mocha",
+            background = {
+                light = "latte",
+                dark = "mocha",
+            },
+        },
+        -- Hooks are ran before and after the configuration of the plugin. 
+        -- Multiple hooks for each may be defined, they will be executed in the order specified by the profile priority or according to the lexigraphical order of the  profile names
+        preSetup = function(pluginDef) -- a pre-setup hook
+            -- This is ran before any setup steps have been completed for the plugin
+        end
+
+        postSetup = function(pluginDef) -- a pre-setup hook
+            -- This is ran after all setup steps have been completed for the plugin
+        end
+
+        config = function(pluginDef) -- optional override for the default 'setup' method
+            -- will be ran instead of the default setup method
+        end
+
+    }
 }
 ```
 
@@ -69,128 +95,71 @@ vim.opt.rtp:prepend(plugin_path)
 
 This allows you to use standard `require()` calls to load the plugin's Lua modules.
 
-## Adding a New Core Plugin
+## Adding a Profile Plugin
 
-### Step 1: Create the Plugin Configuration
+Plugins are defined on a per profile basis. To add a plugin for a profile add a plugins.lua file at `lua/profiles/${profile_name}/plugins.lua`. 
 
-Create a new file in `lua/plugins/core/[plugin-name].lua`:
-
-```lua
-local M = {}
-
--- Plugin specification for the plugin manager
-M.spec = {
-  url = "https://github.com/owner/plugin-repo",
-  name = "plugin-directory-name"  -- Usually the repo name
-}
-
--- Default configuration for the plugin
-M.config = {
-  -- Plugin-specific configuration options
-  option1 = "value1",
-  option2 = true,
-}
-
--- Setup function called by the core plugin loader
-function M.setup(user_config)
-  -- Merge user config with defaults
-  local config = vim.tbl_deep_extend("force", M.config, user_config or {})
-  
-  -- Setup the plugin (this is where you call the plugin's setup function)
-  require("plugin-module-name").setup(config)
-  
-  -- Any additional setup logic
-end
-
--- Optional: Allow profiles to extend the configuration
-function M.extend(extension)
-  M.config = vim.tbl_deep_extend("force", M.config, extension)
-end
-
-return M
-```
-
-### Step 2: Register the Plugin
-
-Add the plugin name to the `plugins` list in `lua/plugins/core/init.lua`:
+Create a new file in `lua/profiles/core/plugins.lua`:
 
 ```lua
-local plugins = {
-  "colorscheme",
-  "your-new-plugin",  -- Add your plugin here
-}
-```
-
-### Step 3: Test the Plugin
-
-Restart Neovim or reload your configuration. The plugin will be:
-
-1. Automatically cloned (if not already present)
-2. Added to the runtime path
-3. Configured and loaded
-
-## Example: Adding Telescope
-
-### 1. Create `lua/plugins/core/telescope.lua`:
-
-```lua
-local M = {}
-
-M.spec = {
-  url = "https://github.com/nvim-telescope/telescope.nvim",
-  name = "telescope.nvim"
-}
-
-M.config = {
-  defaults = {
-    prompt_prefix = " ",
-    selection_caret = " ",
-    mappings = {
-      i = {
-        ["<C-u>"] = false,
-        ["<C-d>"] = false,
-      },
+return {
+    {
+        "catppuccin/nvim",
+        spec = {
+            name="catppuccin",
+        },
+        options = {
+            flavour = "mocha",
+            background = {
+                light = "latte",
+                dark = "mocha",
+            },
+        },
+        postSetup = function(pluginDef)
+            vim.cmd.colorscheme("catppuccin")
+        end
     },
-  },
+    {
+     "nvim-treesitter/nvim-treesitter",
+     spec = {
+       name = "nvim-treesitter.configs",
+     },
+     config = function(plugin_def)
+        require("nvim-treesitter.configs").setup(plugin_def.options)
+     end,
+     options = {
+       ensure_installed = {
+            "lua",
+            "luadoc",
+            "luap",
+            "markdown",
+            "markdown_inline",
+            "vim",
+            "vimdoc",
+            "bash",
+            "jsdoc",
+            "json",
+            "jsonc",
+            "regex",
+            "toml",
+            "xml",
+            "yaml",
+       },
+       highlight = { enable = true },
+      incremental_selection = {
+        enable = true,
+        keymaps = {
+          init_selection = "<C-space>",
+          node_incremental = "<C-space>",
+          scope_incremental = false,
+          node_decremental = "<bs>",
+        },
+      },
+
+     },
+   },
 }
-
-function M.setup(user_config)
-  local config = vim.tbl_deep_extend("force", M.config, user_config or {})
-  require("telescope").setup(config)
-end
-
-function M.extend(extension)
-  M.config = vim.tbl_deep_extend("force", M.config, extension)
-end
-
-return M
 ```
-
-### 2. Add to `lua/plugins/core/init.lua`:
-
-```lua
-local plugins = {
-  "colorscheme",
-  "telescope",  -- Add this line
-}
-```
-
-### 3. Restart Neovim
-
-The plugin will be automatically installed and configured.
-
-## Profile Extension System
-
-Core plugins can be extended by profiles. For example, a profile can extend the treesitter configuration:
-
-```lua
--- In a profile
-local treesitter = require("plugins.core.treesitter")
-treesitter.extend({
-  ensure_installed = { "c_sharp", "razor" }  -- Adds to existing parsers
-})
-```
-
 ## Benefits of This Approach
 
 1. **Simplicity**: Minimal code, easy to understand
@@ -205,7 +174,7 @@ treesitter.extend({
 ### Plugin Not Loading
 
 1. Check if the plugin was cloned: `ls ~/.local/share/thomas.nvim/plugins/`
-2. Verify the plugin spec has correct URL and name
+2. Verify the plugin spec has a correct plugin path
 3. Check for error messages: `:messages`
 
 ### Git Clone Issues
