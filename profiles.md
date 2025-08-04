@@ -14,7 +14,7 @@ A profile is defined by a `profile definition`, which determines:
 
 ## Profile Storage
 
-All plugins are cloned to `$HOME/.local/share/nodezero.nvim/profiles`
+All plugins are cloned to `$HOME/.local/share/nodezero.nvim/profiles` by default. This can be overridden using the `NODEZERO_NVIM_PROFILES_PATH`.
 
 
 Only one profile with the same name/path may be specified, if multiples are defined this will result in an error.
