@@ -1,4 +1,4 @@
-# Makefile for thomas.nvim development
+# Makefile for nodezero.nvim development
 
 # Ensure we're using Lua 5.1
 LUA_VERSION = 5.1
@@ -17,11 +17,11 @@ check-lua-version: ## Verify Lua 5.1 is available
 
 install-deps: check-lua-version ## Install runtime and development dependencies
 	@echo "Installing dependencies with Lua 5.1..."
-	luarocks $(LUAROCKS_CONFIG) install --local --only-deps thomas-nvim-dev-1.rockspec
+	luarocks $(LUAROCKS_CONFIG) install --local --only-deps nodezero-nvim-dev-1.rockspec
 
 install-dev: check-lua-version ## Install in development mode
-	@echo "Installing thomas.nvim in development mode..."
-	luarocks $(LUAROCKS_CONFIG) make thomas-nvim-dev-1.rockspec
+	@echo "Installing nodezero.nvim in development mode..."
+	luarocks $(LUAROCKS_CONFIG) --local make nodezero-nvim-dev-1.rockspec
 
 test: ## Run tests with busted
 	@echo "Running tests..."
@@ -47,7 +47,7 @@ ci: check-lua-version install-deps lint format-check test ## Run full CI pipelin
 
 clean: ## Clean up installed rocks and temporary files
 	@echo "Cleaning up..."
-	luarocks $(LUAROCKS_CONFIG) remove thomas-nvim || true
+	luarocks $(LUAROCKS_CONFIG) remove nodezero.nvim || true
 	rm -rf .luarocks/
 
 # Development workflow targets

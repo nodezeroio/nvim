@@ -1,9 +1,9 @@
-package = "thomas-nvim"
+package = "nodezero-nvim"
 rockspec_format = "3.0"
 version = "dev-1"
 source = {
-   url = "git+https://github.com/thomasbellio/thomas.nvim.git",
-   branch = "main"
+   url = "git+https://github.com/nodezeroio/nvim",
+   branch = "master"
 }
 description = {
    summary = "Custom Neovim configuration with lightweight plugin management",
@@ -18,7 +18,7 @@ description = {
       - Security-focused approach
       - Minimal dependencies
    ]],
-   homepage = "https://github.com/thomasbellio/thomas.nvim",
+   homepage = "https://github.com/nodezeroio/nvim",
    license = "MIT"
 }
 dependencies = {
@@ -40,8 +40,8 @@ build = {
    type = "builtin",
    modules = {
       -- Define your main modules here if you want them installable
-      ["thomas-nvim.utils.plugin-manager"] = "lua/utils/plugin-manager.lua",
-      ["thomas-nvim.profiles.init"] = "lua/profiles/init.lua",
+      -- ["thomas-nvim.utils.plugin-manager"] = "lua/utils/plugin-manager.lua",
+      -- ["thomas-nvim.profiles.init"] = "lua/profiles/init.lua",
    },
    copy_directories = {
       "lua",

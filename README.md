@@ -9,11 +9,17 @@ This neovim configuration is [profile](./profiles.md) driven, meaning that you c
 
 To add a plugin you can follow instructions laid out in [plugins.md](./plugins.md)
 
+
+For details on contributing to this repository please see the [contributing.md](./contributing.md)
+
+
 ## Goals
 
 As with all of my other system setup related projects, the goal is to enable rapid context switching, while only having the minimum necessary setup for the specific context.
 
 For example when coding I need things like auto complete, but when I am writing notes the auto complete feature gets in the way. 
+
+
 
 
 ## Design Heuristics
