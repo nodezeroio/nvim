@@ -13,4 +13,8 @@ function M.getProfilesPath()
   end
 end
 
+function M.sort(profiles)
+  -- sort profiles first by profile.spec.priority, then lexigraphic order based on profile.spec.name if set, else by profile[1]
+end
+
 return M
