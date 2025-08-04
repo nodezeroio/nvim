@@ -19,6 +19,7 @@ Once you have installed the dependencies above you should be able to run `make i
 
 This repository relies on [busted](https://lunarmodules.github.io/busted/) for testing. 
 
+The tests are run using a shim configured in the [busted configuration](./.busted) that executes a shim found [here](./tests/nvim-shim), this ensures that the tests are ran in the context of nvim using the lua interpreter for neovim. 
 
 Once you have done the setup instructions from above you can run the tests by just executing `busted` from the root of this repository.
 

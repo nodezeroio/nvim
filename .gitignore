@@ -1,4 +1,5 @@
 /luarocks
 /lua_modules
 /.luarocks
+tests/xdg/
 luacov.stats.out
