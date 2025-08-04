@@ -1,7 +1,7 @@
 -- lua/utils/global.lua
 local M = {}
 
-local profileUtils = require('profiles.utils')
+local profileUtils = require("profiles.utils")
 -- Create the global NodeZeroVim object
 _G.NodeZeroVim = {}
 
@@ -14,7 +14,6 @@ NodeZeroVim.config = {
   plugin_dir = vim.fn.stdpath("data") .. "/plugins",
   profiles = {},
 }
-
 
 -- Debug utilities
 NodeZeroVim.debug = {}

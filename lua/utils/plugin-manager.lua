@@ -7,7 +7,7 @@ local function normalize_plugin_spec(plugin_def)
   -- If the first element is a string, it's the plugin identifier (LazyVim style)
   if type(plugin_def[1]) == "string" then
     if not plugin_def.spec then
-        plugin_def.spec = {}
+      plugin_def.spec = {}
     end
     plugin_def.spec.plugin = plugin_def[1]
     if not plugin_def.spec.name then
@@ -40,7 +40,7 @@ local function resolve_plugin_url(spec)
   end
 
   -- Fallback to GitHub
-  return "https://github.com/" ..  (overrides[spec.plugin] or spec.plugin)
+  return "https://github.com/" .. (overrides[spec.plugin] or spec.plugin)
 end
 
 -- Simple function to ensure plugin is cloned and added to rtp
@@ -70,7 +70,10 @@ function M.ensure(spec)
     if vim.v.shell_error == 0 then
       vim.notify("✓ " .. spec.plugin .. " installed successfully", vim.log.levels.INFO)
     else
-      vim.notify("✗ Failed to install " .. spec.plugin .. " from " .. plugin_url .. ": " .. result, vim.log.levels.ERROR)
+      vim.notify(
+        "✗ Failed to install " .. spec.plugin .. " from " .. plugin_url .. ": " .. result,
+        vim.log.levels.ERROR
+      )
       return false
     end
   end
@@ -90,10 +93,10 @@ function M.setup(plugin_def)
 
   -- Call the main plugin setup if specified
   if plugin_def.config and type(plugin_def.config) == "function" then
-     plugin_def.config(plugin_def)
+    plugin_def.config(plugin_def)
   elseif plugin_def.name then
-      -- String format: require the module and call setup
-      require(plugin_def.name).setup(options)
+    -- String format: require the module and call setup
+    require(plugin_def.name).setup(options)
   end
 
   -- Execute post-setup hook if it exists

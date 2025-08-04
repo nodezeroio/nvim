@@ -33,7 +33,7 @@ test-watch: ## Run tests in watch mode
 
 lint: ## Run luacheck for linting
 	@echo "Running luacheck..."
-	luacheck lua/ tests/ --std=luajit
+	luacheck lua/ tests/
 
 format: ## Format code with stylua
 	@echo "Formatting code with stylua..."
