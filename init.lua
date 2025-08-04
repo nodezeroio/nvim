@@ -1,3 +1,3 @@
 require("utils.global").setup()
 
-require("profiles").setup()
+-- require("profiles").setup()

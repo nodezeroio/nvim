@@ -1,6 +1,7 @@
 -- lua/utils/global.lua
 local M = {}
 
+local profileUtils = require('profiles.utils')
 -- Create the global NodeZeroVim object
 _G.NodeZeroVim = {}
 
@@ -12,6 +13,8 @@ NodeZeroVim.config = {
   plugin_dir = vim.fn.stdpath("data") .. "/plugins",
   profiles = {},
 }
+
+NodeZeroVim.profileUtils = profileUtils
 
 -- Debug utilities
 NodeZeroVim.debug = {}
@@ -33,28 +36,10 @@ function NodeZeroVim.debug.log(msg, level)
   end
 end
 
--- -- Profile management
--- function NodeZeroVim.profiles.get_active()
---   return NodeZeroVim.utils.get_active_profiles()
--- end
---
--- function NodeZeroVim.profiles.is_active(profile_name)
---   local active = NodeZeroVim.profiles.get_active()
---   for _, profile in ipairs(active) do
---     if profile == profile_name then
---       return true
---     end
---   end
---   return false
--- end
-
 -- Initialize the global object
 function M.setup()
   -- Any additional initialization can go here
   NodeZeroVim.debug.log("NodeZeroVim global object initialized")
-
-  -- Store active profiles in config
-  -- NodeZeroVim.config.profiles = NodeZeroVim.profiles.get_active()
 end
 
 return M
