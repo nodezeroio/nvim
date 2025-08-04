@@ -1,9 +1,5 @@
 -- lua/utils/global.lua
 local M = {}
-
-local profileUtils = require("profiles.utils")
-NodeZeroVim.utils.profiles = profileUtils
-
 -- Create the global NodeZeroVim object
 _G.NodeZeroVim = {}
 
@@ -46,6 +42,11 @@ function NodeZeroVim.utils.ensurePath(path, create)
 
   return true
 end
+
+local profileUtils = require("profiles.utils")
+
+NodeZeroVim.utils.profiles = profileUtils
+
 -- Configuration and state
 NodeZeroVim.config = {
   plugin_dir = vim.fn.stdpath("data") .. "/plugins",
