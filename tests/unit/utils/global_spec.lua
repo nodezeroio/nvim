@@ -1,9 +1,9 @@
 describe("nodezero.nvim utils unit tests", function()
   before_each(function()
-    package.loaded["utils.global"] = nil
+    package.loaded["global"] = nil
 
     -- Require fresh module instance
-    require("utils.global")
+    require("global")
   end)
   after_each(function()
     package.loaded["utils.global"] = nil
@@ -326,7 +326,7 @@ describe("nodezero.nvim utils unit tests", function()
     before_each(function()
       -- Store original environment
       original_env = vim.env.NODEZERO_NVIM_PROFILES_PATH
-      profile_utils = NodeZeroVim.utils.profiles
+      profile_utils = NodeZeroVim.profiles.utils
     end)
 
     after_each(function()
