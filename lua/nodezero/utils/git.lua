@@ -1,5 +1,7 @@
 local M = {}
 
+function M.cloneRepo(url, path, branch) end
+
 -- Helper function to validate base repository URLs
 function M.isValidBaseRepositoryURL(url)
   local patterns = {
