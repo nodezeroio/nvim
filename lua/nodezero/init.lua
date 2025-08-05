@@ -3,12 +3,6 @@ local M = {}
 -- Create the global NodeZeroVim object
 _G.NodeZeroVim = {}
 
--- Core utility functions
-NodeZeroVim.utils = require("nodezero.utils")
-NodeZeroVim.profiles = {}
-
-NodeZeroVim.profiles = require("nodezero.profiles")
-
 -- Configuration and state
 NodeZeroVim.config = {
   plugin_dir = vim.fn.stdpath("data") .. "/plugins",
@@ -17,6 +11,12 @@ NodeZeroVim.config = {
 
 -- Debug utilities
 NodeZeroVim.debug = require("nodezero.debug")
+
+-- Core utility functions
+NodeZeroVim.utils = require("nodezero.utils")
+NodeZeroVim.profiles = {}
+
+NodeZeroVim.profiles = require("nodezero.profiles")
 
 -- Initialize the global object
 function M.setup()

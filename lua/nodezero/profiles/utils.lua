@@ -1,5 +1,30 @@
 local M = {}
 
+function M.getBaseRepositoryURL()
+  -- Get the environment variable
+  local env_url = vim.env.NODEZERO_NVIM_PROFILE_REPOSITORY
+  -- Check if environment variable is not set or is empty/whitespace
+  if not env_url or env_url == "" or env_url:match("^%s*$") then
+    return "https://github.com/"
+  end
+
+  -- Validate the URL format
+  if NodeZeroVim.utils.isValidBaseRepositoryURL(env_url) then
+    if string.sub(env_url, -1) ~= "/" then
+      return env_url .. "/"
+    end
+    return env_url
+  else
+    -- Log warning and fallback to GitHub
+    NodeZeroVim.debug.log(
+      string.format("'%s' is not a valid base repository URL, falling back to github", env_url),
+      "WARN"
+    )
+    return "https://github.com/"
+  end
+end
+
+
 function M.getProfilesPath()
   -- Check if the environment variable is set and not empty
   local env_path = vim.env.NODEZERO_NVIM_PROFILES_PATH
@@ -73,4 +98,5 @@ function M.sort(profiles)
 
   return sorted_profiles
 end
+
 return M

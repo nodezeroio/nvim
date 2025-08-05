@@ -1,12 +1,12 @@
 describe("nodezero.global unit tests", function()
   before_each(function()
-    package.loaded["global"] = nil
+    package.loaded["nodezero"] = nil
 
     -- Require fresh module instance
-    require("global")
+    require("nodezero")
   end)
   after_each(function()
-    package.loaded["utils.global"] = nil
+    package.loaded["nodezero"] = nil
   end)
   it("should have profiles", function()
     assert.truthy(NodeZeroVim.profiles)
