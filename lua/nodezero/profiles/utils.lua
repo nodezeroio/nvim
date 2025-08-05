@@ -9,7 +9,7 @@ function M.getBaseRepositoryURL()
   end
 
   -- Validate the URL format
-  if NodeZeroVim.utils.isValidBaseRepositoryURL(env_url) then
+  if NodeZeroVim.utils.vcs.isValidBaseRepositoryURL(env_url) then
     if string.sub(env_url, -1) ~= "/" then
       return env_url .. "/"
     end
@@ -23,7 +23,6 @@ function M.getBaseRepositoryURL()
     return "https://github.com/"
   end
 end
-
 
 function M.getProfilesPath()
   -- Check if the environment variable is set and not empty

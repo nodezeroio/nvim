@@ -35,7 +35,7 @@ describe("nodezero.nvim utils unit tests", function()
         vim.fn.mkdir(test_path, "p")
 
         -- Act
-        local result = utils.ensurePath(test_path, true)
+        local result = utils.fs.ensurePath(test_path, true)
 
         -- Assert
         assert.is_true(result)
@@ -48,7 +48,7 @@ describe("nodezero.nvim utils unit tests", function()
         vim.fn.mkdir(test_path, "p")
 
         -- Act
-        local result = utils.ensurePath(test_path, false)
+        local result = utils.fs.ensurePath(test_path, false)
 
         -- Assert
         assert.is_true(result)
@@ -61,7 +61,7 @@ describe("nodezero.nvim utils unit tests", function()
         vim.fn.mkdir(test_path, "p")
 
         -- Act
-        local result = utils.ensurePath(test_path, nil)
+        local result = utils.fs.ensurePath(test_path, nil)
 
         -- Assert
         assert.is_true(result)
@@ -76,7 +76,7 @@ describe("nodezero.nvim utils unit tests", function()
         vim.fn.writefile({ "test content" }, test_file)
 
         -- Act
-        local result = utils.ensurePath(test_file, false)
+        local result = utils.fs.ensurePath(test_file, false)
 
         -- Assert
         assert.is_true(result)
@@ -93,7 +93,7 @@ describe("nodezero.nvim utils unit tests", function()
         assert.are.equal(0, vim.fn.isdirectory(test_path))
 
         -- Act
-        local result = utils.ensurePath(test_path, true)
+        local result = utils.fs.ensurePath(test_path, true)
 
         -- Assert
         assert.is_true(result)
@@ -109,7 +109,7 @@ describe("nodezero.nvim utils unit tests", function()
 
         -- Act & Assert
         assert.has_error(function()
-          utils.ensurePath(test_path, false)
+          utils.fs.ensurePath(test_path, false)
         end, "Path does not exist: " .. test_path)
 
         -- Verify path was not created
@@ -125,7 +125,7 @@ describe("nodezero.nvim utils unit tests", function()
 
         -- Act & Assert
         assert.has_error(function()
-          utils.ensurePath(test_path, nil)
+          utils.fs.ensurePath(test_path, nil)
         end, "Path does not exist: " .. test_path)
 
         -- Verify path was not created
@@ -140,7 +140,7 @@ describe("nodezero.nvim utils unit tests", function()
         assert.are.equal(0, vim.fn.isdirectory(test_path))
 
         -- Act
-        local result = utils.ensurePath(test_path, true)
+        local result = utils.fs.ensurePath(test_path, true)
 
         -- Assert
         assert.is_true(result)
@@ -155,14 +155,14 @@ describe("nodezero.nvim utils unit tests", function()
       it("should throw error for empty string path", function()
         -- Act & Assert
         assert.has_error(function()
-          utils.ensurePath("", true)
+          utils.fs.ensurePath("", true)
         end, "Path cannot be empty")
       end)
 
       it("should throw error for nil path", function()
         -- Act & Assert
         assert.has_error(function()
-          utils.ensurePath(nil, true)
+          utils.fs.ensurePath(nil, true)
         end, "Path cannot be nil or empty")
       end)
 
@@ -175,7 +175,7 @@ describe("nodezero.nvim utils unit tests", function()
         vim.fn.system("rm -rf " .. expanded_path)
 
         -- Act
-        local result = utils.ensurePath(test_path, true)
+        local result = utils.fs.ensurePath(test_path, true)
 
         -- Assert
         assert.is_true(result)
@@ -194,7 +194,7 @@ describe("nodezero.nvim utils unit tests", function()
         vim.fn.system("rm -rf " .. expanded_path)
 
         -- Act
-        local result = utils.ensurePath(test_path, true)
+        local result = utils.fs.ensurePath(test_path, true)
 
         -- Assert
         assert.is_true(result)
@@ -209,7 +209,7 @@ describe("nodezero.nvim utils unit tests", function()
         local test_path = test_base_dir .. "/dir with spaces & special-chars_123"
 
         -- Act
-        local result = utils.ensurePath(test_path, true)
+        local result = utils.fs.ensurePath(test_path, true)
 
         -- Assert
         assert.is_true(result)
@@ -222,7 +222,7 @@ describe("nodezero.nvim utils unit tests", function()
         local test_path = test_base_dir .. "/" .. long_segment .. "/" .. long_segment
 
         -- Act
-        local result = utils.ensurePath(test_path, true)
+        local result = utils.fs.ensurePath(test_path, true)
 
         -- Assert
         assert.is_true(result)
@@ -237,7 +237,7 @@ describe("nodezero.nvim utils unit tests", function()
 
         -- Act & Assert
         assert.has_error(function()
-          utils.ensurePath(test_path, true)
+          utils.fs.ensurePath(test_path, true)
         end) -- Error message will depend on the actual failure reason
       end)
 
@@ -246,9 +246,9 @@ describe("nodezero.nvim utils unit tests", function()
         local test_path = test_base_dir .. "/consistent_test"
 
         -- Act: Call multiple times
-        local result1 = utils.ensurePath(test_path, true)
-        local result2 = utils.ensurePath(test_path, true)
-        local result3 = utils.ensurePath(test_path, false)
+        local result1 = utils.fs.ensurePath(test_path, true)
+        local result2 = utils.fs.ensurePath(test_path, true)
+        local result3 = utils.fs.ensurePath(test_path, false)
 
         -- Assert: All calls should return true once created
         assert.is_true(result1)
@@ -263,11 +263,11 @@ describe("nodezero.nvim utils unit tests", function()
         local nonexistent_path = test_base_dir .. "/nonexistent"
 
         -- Create one path
-        utils.ensurePath(existing_path, true)
+        utils.fs.ensurePath(existing_path, true)
 
         -- Act & Assert: Should still throw error for nonexistent path
         assert.has_error(function()
-          utils.ensurePath(nonexistent_path, false)
+          utils.fs.ensurePath(nonexistent_path, false)
         end, "Path does not exist: " .. nonexistent_path)
       end)
     end)
@@ -278,7 +278,7 @@ describe("nodezero.nvim utils unit tests", function()
         local test_path = test_base_dir .. "/trailing_slash/"
 
         -- Act
-        local result = utils.ensurePath(test_path, true)
+        local result = utils.fs.ensurePath(test_path, true)
 
         -- Assert
         assert.is_true(result)
@@ -290,7 +290,7 @@ describe("nodezero.nvim utils unit tests", function()
         local test_path = test_base_dir .. "//multiple///slashes"
 
         -- Act
-        local result = utils.ensurePath(test_path, true)
+        local result = utils.fs.ensurePath(test_path, true)
 
         -- Assert
         assert.is_true(result)
@@ -307,7 +307,7 @@ describe("nodezero.nvim utils unit tests", function()
         local test_path = "./relative_test_dir"
 
         -- Act
-        local result = utils.ensurePath(test_path, true)
+        local result = utils.fs.ensurePath(test_path, true)
 
         -- Assert
         assert.is_true(result)

@@ -16,6 +16,7 @@ A profile is defined by a `profile definition`, which determines:
 
 All plugins are cloned to `$XDG_DATA_HOME/nodezero.nvim/profiles` by default. This can be overridden using the `NODEZERO_NVIM_PROFILES_PATH`.
 
+Profiles will be downloaded from `https://github.com` by default, this can be overridden by setting: `NODEZERO_NVIM_PROFILE_REPOSITORY`
 
 Only one profile with the same name/path may be specified, if multiples are defined this will result in an error.
 
