@@ -3,3 +3,4 @@
 /.luarocks
 tests/xdg/
 luacov.stats.out
+todo.md
