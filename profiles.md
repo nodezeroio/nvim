@@ -53,5 +53,15 @@ Similarly config may be defined as a file named `config.lua` or a directory like
 }
 ```
 
+### Profile Loading
+
+The profiles are loaded based on the following logic: 
+
+1. Retrieve all profile config from 'nodezero.profiles.config'
+2. Sort profiles based on sorting logic
+3. Clone the profile repository, if not already done, based on configured profile path and profile repository
+4. Load all profile configuration in priority order
+5. Load all profile plugin configuration based on priority order of the profiles
+6. Clone plugins and call appropriate setup logic
 
 
