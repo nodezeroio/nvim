@@ -1,5 +1,7 @@
 local M = {}
 
+local utils = require('nodezero.utils')
+
 function M.getBaseRepositoryURL()
   -- Get the environment variable
   local env_url = vim.env.NODEZERO_NVIM_PROFILE_REPOSITORY
@@ -9,14 +11,14 @@ function M.getBaseRepositoryURL()
   end
 
   -- Validate the URL format
-  if NodeZeroVim.utils.vcs.isValidBaseRepositoryURL(env_url) then
+  if utils.vcs.isValidBaseRepositoryURL(env_url) then
     if string.sub(env_url, -1) ~= "/" then
       return env_url .. "/"
     end
     return env_url
   else
     -- Log warning and fallback to GitHub
-    NodeZeroVim.debug.log(
+    utils.debug.log(
       string.format("'%s' is not a valid base repository URL, falling back to github", env_url),
       "WARN"
     )
