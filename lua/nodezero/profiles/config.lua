@@ -1,5 +1,5 @@
 return {
-    {
-        "nodezeroio/nvim-profiles-core"
-    }
+  {
+    "nodezeroio/nvim-profiles-core",
+  },
 }

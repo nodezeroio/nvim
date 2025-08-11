@@ -1,6 +1,6 @@
 local M = {}
 
-local utils = require('nodezero.utils')
+local utils = require("nodezero.utils")
 
 function M.getBaseRepositoryURL()
   -- Get the environment variable
@@ -18,10 +18,7 @@ function M.getBaseRepositoryURL()
     return env_url
   else
     -- Log warning and fallback to GitHub
-    utils.debug.log(
-      string.format("'%s' is not a valid base repository URL, falling back to github", env_url),
-      "WARN"
-    )
+    utils.debug.log(string.format("'%s' is not a valid base repository URL, falling back to github", env_url), "WARN")
     return "https://github.com/"
   end
 end

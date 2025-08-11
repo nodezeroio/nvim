@@ -50,7 +50,7 @@ function M.cloneRepo(repoDetails)
   end
 
   -- Determine the actual clone destination
-  local clone_path = repoDetails.path .. (repoDetails.pathToRepo or '')
+  local clone_path = repoDetails.path .. (repoDetails.pathToRepo or "")
 
   -- Build git clone command
   local cmd = "git clone"
@@ -80,7 +80,6 @@ function M.cloneRepo(repoDetails)
     return false
   end
 end
-
 
 -- Helper function to validate base repository URLs
 function M.isValidBaseRepositoryURL(url)
