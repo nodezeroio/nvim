@@ -97,4 +97,7 @@ function M.sort(profiles)
   return sorted_profiles
 end
 
+
+function M.mergePlugins(profiles) end
+
 return M
