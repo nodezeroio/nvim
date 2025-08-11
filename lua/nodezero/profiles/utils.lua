@@ -153,9 +153,12 @@ function M.sort(profiles)
 
   return sorted_profiles
 end
+
+-- Will resolve dependencies and other items on plugins for profiles
+function M.normalizePlugins(profiles) end
+
 -- Implementation for the mergePlugins function
 -- Add this to lua/nodezero/profiles/utils.lua replacing the existing stub
-
 function M.mergePlugins(profiles)
   -- Handle empty profiles list
   if not profiles or #profiles == 0 then
