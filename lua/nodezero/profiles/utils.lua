@@ -153,9 +153,123 @@ function M.sort(profiles)
 
   return sorted_profiles
 end
+-- Implementation for normalizePluginDependencies function
+-- Add this to lua/nodezero/profiles/utils.lua replacing the existing stub
 
--- Will resolve dependencies and other items on plugins for profiles
-function M.normalizePluginDependencies(profiles) end
+function M.normalizePluginDependencies(profiles)
+  -- Handle empty profiles list
+  if not profiles or #profiles == 0 then
+    return {}
+  end
+
+  -- Deep copy profiles to avoid modifying original
+  local result = {}
+  for i, profile in ipairs(profiles) do
+    result[i] = deep_copy_table(profile)
+  end
+
+  -- Process each profile independently
+  for _, profile in ipairs(result) do
+    -- Initialize plugins array if it doesn't exist or is nil
+    if not profile.plugins then
+      profile.plugins = {}
+    end
+
+    -- Skip profiles with no plugins
+    if #profile.plugins == 0 then
+      goto continue_profile
+    end
+
+    -- Track processed dependencies to avoid infinite loops in circular dependencies
+    local processed_deps = {}
+
+    -- Keep track of plugins to add (dependencies)
+    local deps_to_add = {}
+
+    -- Recursive function to resolve dependencies
+    local function resolve_dependencies(plugin_list)
+      for _, plugin_def in ipairs(plugin_list) do
+        -- Validate plugin definition
+        if not plugin_def or type(plugin_def) ~= "table" or not plugin_def[1] or type(plugin_def[1]) ~= "string" then
+          goto continue_plugin
+        end
+
+        -- Process dependencies if they exist
+        if plugin_def.dependencies and type(plugin_def.dependencies) == "table" then
+          for _, dep_identifier in ipairs(plugin_def.dependencies) do
+            -- Only process string dependencies
+            if type(dep_identifier) == "string" and dep_identifier ~= "" then
+              -- Skip if we've already processed this dependency (prevents infinite loops)
+              if processed_deps[dep_identifier] then
+                goto continue_dependency
+              end
+
+              -- Mark as processed
+              processed_deps[dep_identifier] = true
+
+              -- Check if dependency already exists in current profile
+              local dependency_exists = false
+              for _, existing_plugin in ipairs(profile.plugins) do
+                if existing_plugin and existing_plugin[1] == dep_identifier then
+                  dependency_exists = true
+                  break
+                end
+              end
+
+              -- If dependency doesn't exist, add it to the list of dependencies to add
+              if not dependency_exists then
+                -- Check if we've already queued this dependency
+                local already_queued = false
+                for _, queued_dep in ipairs(deps_to_add) do
+                  if queued_dep[1] == dep_identifier then
+                    already_queued = true
+                    break
+                  end
+                end
+
+                if not already_queued then
+                  -- Create minimal plugin definition for dependency
+                  local dep_plugin = { dep_identifier }
+                  table.insert(deps_to_add, dep_plugin)
+                end
+              end
+
+              ::continue_dependency::
+            end
+          end
+        end
+
+        ::continue_plugin::
+      end
+    end
+
+    -- Initial pass: resolve dependencies from existing plugins
+    resolve_dependencies(profile.plugins)
+
+    -- Continue resolving until no new dependencies are found (handles nested dependencies)
+    local previous_deps_count = 0
+    while #deps_to_add > previous_deps_count do
+      previous_deps_count = #deps_to_add
+
+      -- Resolve dependencies of the newly added dependencies
+      local current_deps_to_check = {}
+      for i = previous_deps_count + 1, #deps_to_add do
+        table.insert(current_deps_to_check, deps_to_add[i])
+      end
+
+      resolve_dependencies(current_deps_to_check)
+    end
+
+    -- Add all resolved dependencies to the end of the plugins list
+    for _, dep_plugin in ipairs(deps_to_add) do
+      table.insert(profile.plugins, dep_plugin)
+    end
+
+    ::continue_profile::
+  end
+
+  return result
+end
 
 -- Implementation for the mergePlugins function
 -- Add this to lua/nodezero/profiles/utils.lua replacing the existing stub

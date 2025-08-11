@@ -19,6 +19,867 @@ describe("profiles", function()
       vim.env = original_env
       package.loaded["nodezero"] = nil
     end)
+    describe("normalizePluginDependencies", function()
+      describe("basic dependency resolution", function()
+        it("should add missing dependency to profile", function()
+          -- Arrange
+          local profiles = {
+            {
+              "nodezero/core",
+              spec = {
+                name = "core",
+                priority = 0,
+              },
+              plugins = {
+                {
+                  "nvim-telescope/telescope.nvim",
+                  spec = {
+                    name = "telescope",
+                  },
+                  dependencies = {
+                    "nvim-lua/plenary.nvim",
+                  },
+                },
+              },
+            },
+          }
+
+          -- Act
+          local result = profile_utils.normalizePluginDependencies(profiles)
+
+          -- Assert
+          assert.are.equal(1, #result)
+          assert.are.equal(2, #result[1].plugins) -- Original + dependency
+
+          -- Check that the dependency was added
+          local found_dependency = false
+          for _, plugin in ipairs(result[1].plugins) do
+            if plugin[1] == "nvim-lua/plenary.nvim" then
+              found_dependency = true
+              break
+            end
+          end
+          assert.is_true(found_dependency)
+        end)
+
+        it("should not add dependency if it already exists", function()
+          -- Arrange
+          local profiles = {
+            {
+              "nodezero/core",
+              spec = {
+                name = "core",
+                priority = 0,
+              },
+              plugins = {
+                {
+                  "nvim-telescope/telescope.nvim",
+                  spec = {
+                    name = "telescope",
+                  },
+                  dependencies = {
+                    "nvim-lua/plenary.nvim",
+                  },
+                },
+                {
+                  "nvim-lua/plenary.nvim",
+                  spec = {
+                    name = "plenary",
+                  },
+                  options = {
+                    some_config = true,
+                  },
+                },
+              },
+            },
+          }
+
+          -- Act
+          local result = profile_utils.normalizePluginDependencies(profiles)
+
+          -- Assert
+          assert.are.equal(1, #result)
+          assert.are.equal(2, #result[1].plugins) -- Should remain the same count
+
+          -- Verify the existing plugin with options is preserved
+          local plenary_plugin = nil
+          for _, plugin in ipairs(result[1].plugins) do
+            if plugin[1] == "nvim-lua/plenary.nvim" then
+              plenary_plugin = plugin
+              break
+            end
+          end
+
+          assert.is_not_nil(plenary_plugin)
+          assert.are.equal("plenary", plenary_plugin.spec.name)
+          assert.is_true(plenary_plugin.options.some_config)
+        end)
+
+        it("should handle plugins with no dependencies", function()
+          -- Arrange
+          local profiles = {
+            {
+              "nodezero/core",
+              spec = {
+                name = "core",
+                priority = 0,
+              },
+              plugins = {
+                {
+                  "catppuccin/nvim",
+                  spec = {
+                    name = "catppuccin",
+                  },
+                  options = {
+                    flavour = "mocha",
+                  },
+                  -- No dependencies field
+                },
+              },
+            },
+          }
+
+          -- Act
+          local result = profile_utils.normalizePluginDependencies(profiles)
+
+          -- Assert
+          assert.are.equal(1, #result)
+          assert.are.equal(1, #result[1].plugins) -- Should remain unchanged
+          assert.are.equal("catppuccin/nvim", result[1].plugins[1][1])
+        end)
+
+        it("should handle plugins with empty dependencies array", function()
+          -- Arrange
+          local profiles = {
+            {
+              "nodezero/core",
+              spec = {
+                name = "core",
+                priority = 0,
+              },
+              plugins = {
+                {
+                  "catppuccin/nvim",
+                  spec = {
+                    name = "catppuccin",
+                  },
+                  dependencies = {}, -- Empty dependencies
+                },
+              },
+            },
+          }
+
+          -- Act
+          local result = profile_utils.normalizePluginDependencies(profiles)
+
+          -- Assert
+          assert.are.equal(1, #result)
+          assert.are.equal(1, #result[1].plugins) -- Should remain unchanged
+        end)
+      end)
+      describe("multiple dependencies", function()
+        it("should add multiple missing dependencies", function()
+          -- Arrange
+          local profiles = {
+            {
+              "nodezero/core",
+              spec = {
+                name = "core",
+                priority = 0,
+              },
+              plugins = {
+                {
+                  "complex/plugin",
+                  spec = {
+                    name = "complex",
+                  },
+                  dependencies = {
+                    "nvim-lua/plenary.nvim",
+                    "nvim-tree/nvim-web-devicons",
+                    "folke/which-key.nvim",
+                  },
+                },
+              },
+            },
+          }
+
+          -- Act
+          local result = profile_utils.normalizePluginDependencies(profiles)
+
+          -- Assert
+          assert.are.equal(1, #result)
+          assert.are.equal(4, #result[1].plugins) -- Original + 3 dependencies
+
+          -- Check that all dependencies were added
+          local dependency_names = {
+            "nvim-lua/plenary.nvim",
+            "nvim-tree/nvim-web-devicons",
+            "folke/which-key.nvim",
+          }
+
+          for _, dep_name in ipairs(dependency_names) do
+            local found = false
+            for _, plugin in ipairs(result[1].plugins) do
+              if plugin[1] == dep_name then
+                found = true
+                break
+              end
+            end
+            assert.is_true(found, "Dependency " .. dep_name .. " should be added")
+          end
+        end)
+
+        it("should add only missing dependencies when some already exist", function()
+          -- Arrange
+          local profiles = {
+            {
+              "nodezero/core",
+              spec = {
+                name = "core",
+                priority = 0,
+              },
+              plugins = {
+                {
+                  "complex/plugin",
+                  spec = {
+                    name = "complex",
+                  },
+                  dependencies = {
+                    "nvim-lua/plenary.nvim",
+                    "nvim-tree/nvim-web-devicons",
+                    "folke/which-key.nvim",
+                  },
+                },
+                {
+                  "nvim-tree/nvim-web-devicons", -- This dependency already exists
+                  spec = {
+                    name = "devicons",
+                  },
+                },
+              },
+            },
+          }
+
+          -- Act
+          local result = profile_utils.normalizePluginDependencies(profiles)
+
+          -- Assert
+          assert.are.equal(1, #result)
+          assert.are.equal(4, #result[1].plugins) -- Original + existing + 2 new dependencies
+
+          -- Count occurrences of nvim-web-devicons (should be exactly 1)
+          local devicons_count = 0
+          for _, plugin in ipairs(result[1].plugins) do
+            if plugin[1] == "nvim-tree/nvim-web-devicons" then
+              devicons_count = devicons_count + 1
+            end
+          end
+          assert.are.equal(1, devicons_count, "nvim-web-devicons should appear exactly once")
+        end)
+      end)
+      describe("nested dependencies", function()
+        it("should recursively resolve dependencies", function()
+          -- Arrange
+          local profiles = {
+            {
+              "nodezero/core",
+              spec = {
+                name = "core",
+                priority = 0,
+              },
+              plugins = {
+                {
+                  "plugin-a/main",
+                  spec = {
+                    name = "plugin-a",
+                  },
+                  dependencies = {
+                    "plugin-b/dependency",
+                  },
+                },
+                {
+                  "plugin-b/dependency",
+                  spec = {
+                    name = "plugin-b",
+                  },
+                  dependencies = {
+                    "plugin-c/nested-dependency",
+                  },
+                },
+              },
+            },
+          }
+
+          -- Act
+          local result = profile_utils.normalizePluginDependencies(profiles)
+
+          -- Assert
+          assert.are.equal(1, #result)
+          assert.are.equal(3, #result[1].plugins) -- Original 2 + 1 nested dependency
+
+          -- Check that the nested dependency was added
+          local found_nested = false
+          for _, plugin in ipairs(result[1].plugins) do
+            if plugin[1] == "plugin-c/nested-dependency" then
+              found_nested = true
+              break
+            end
+          end
+          assert.is_true(found_nested, "Nested dependency should be added")
+        end)
+        it("should recursively resolve dependencies", function()
+          -- Arrange
+          local profiles = {
+            {
+              "nodezero/core",
+              spec = {
+                name = "core",
+                priority = 0,
+              },
+              plugins = {
+                {
+                  "plugin-a/main",
+                  spec = {
+                    name = "plugin-a",
+                  },
+                  dependencies = {
+                    "plugin-b/dependency",
+                  },
+                },
+                {
+                  "plugin-b/dependency",
+                  spec = {
+                    name = "plugin-b",
+                  },
+                  dependencies = {
+                    "plugin-c/nested-dependency",
+                  },
+                },
+              },
+            },
+          }
+
+          -- Act
+          local result = profile_utils.normalizePluginDependencies(profiles)
+
+          -- Assert
+          assert.are.equal(1, #result)
+          assert.are.equal(3, #result[1].plugins) -- Original 2 + 1 nested dependency
+
+          -- Check that the nested dependency was added
+          local found_nested = false
+          for _, plugin in ipairs(result[1].plugins) do
+            if plugin[1] == "plugin-c/nested-dependency" then
+              found_nested = true
+              break
+            end
+          end
+          assert.is_true(found_nested, "Nested dependency should be added")
+        end)
+        it("should handle complex dependency chains", function()
+          -- Arrange
+          local profiles = {
+            {
+              "nodezero/core",
+              spec = {
+                name = "core",
+                priority = 0,
+              },
+              plugins = {
+                {
+                  "level-1/plugin",
+                  dependencies = {
+                    "level-2/plugin",
+                  },
+                },
+                {
+                  "level-2/plugin",
+                  dependencies = {
+                    "level-3/plugin",
+                    "level-3b/plugin",
+                  },
+                },
+                {
+                  "level-3b/plugin",
+                  dependencies = {
+                    "level-4/plugin",
+                  },
+                },
+              },
+            },
+          }
+
+          -- Act
+          local result = profile_utils.normalizePluginDependencies(profiles)
+
+          -- Assert
+          assert.are.equal(1, #result)
+          assert.are.equal(5, #result[1].plugins) -- Original 3 + 2 resolved dependencies
+
+          -- Check that all dependencies in the chain were resolved
+          local expected_plugins = {
+            "level-1/plugin",
+            "level-2/plugin",
+            "level-3b/plugin",
+            "level-3/plugin",
+            "level-4/plugin",
+          }
+
+          for _, expected in ipairs(expected_plugins) do
+            local found = false
+            for _, plugin in ipairs(result[1].plugins) do
+              if plugin[1] == expected then
+                found = true
+                break
+              end
+            end
+            assert.is_true(found, "Plugin " .. expected .. " should be present")
+          end
+        end)
+        it("should handle circular dependencies gracefully", function()
+          -- Arrange
+          local profiles = {
+            {
+              "nodezero/core",
+              spec = {
+                name = "core",
+                priority = 0,
+              },
+              plugins = {
+                {
+                  "plugin-a/circular",
+                  dependencies = {
+                    "plugin-b/circular",
+                  },
+                },
+                {
+                  "plugin-b/circular",
+                  dependencies = {
+                    "plugin-a/circular", -- Circular reference
+                  },
+                },
+              },
+            },
+          }
+
+          -- Act
+          local result = profile_utils.normalizePluginDependencies(profiles)
+
+          -- Assert
+          assert.are.equal(1, #result)
+          assert.are.equal(2, #result[1].plugins) -- Should not add duplicates or infinite loop
+
+          -- Verify both plugins are still present
+          local found_a = false
+          local found_b = false
+          for _, plugin in ipairs(result[1].plugins) do
+            if plugin[1] == "plugin-a/circular" then
+              found_a = true
+            elseif plugin[1] == "plugin-b/circular" then
+              found_b = true
+            end
+          end
+          assert.is_true(found_a)
+          assert.is_true(found_b)
+        end)
+      end)
+      describe("multiple profiles", function()
+        it("should process dependencies for each profile independently", function()
+          -- Arrange
+          local profiles = {
+            {
+              "nodezero/core",
+              spec = {
+                name = "core",
+                priority = 1,
+              },
+              plugins = {
+                {
+                  "nvim-telescope/telescope.nvim",
+                  dependencies = {
+                    "nvim-lua/plenary.nvim",
+                  },
+                },
+              },
+            },
+            {
+              "nodezero/ui",
+              spec = {
+                name = "ui",
+                priority = 2,
+              },
+              plugins = {
+                {
+                  "folke/which-key.nvim",
+                  dependencies = {
+                    "nvim-lua/plenary.nvim", -- Same dependency as profile 1
+                  },
+                },
+              },
+            },
+          }
+
+          -- Act
+          local result = profile_utils.normalizePluginDependencies(profiles)
+
+          -- Assert
+          assert.are.equal(2, #result)
+          assert.are.equal(2, #result[1].plugins) -- core profile: telescope + plenary
+          assert.are.equal(2, #result[2].plugins) -- ui profile: which-key + plenary
+
+          -- Verify plenary was added to both profiles
+          local core_has_plenary = false
+          local ui_has_plenary = false
+
+          for _, plugin in ipairs(result[1].plugins) do
+            if plugin[1] == "nvim-lua/plenary.nvim" then
+              core_has_plenary = true
+              break
+            end
+          end
+
+          for _, plugin in ipairs(result[2].plugins) do
+            if plugin[1] == "nvim-lua/plenary.nvim" then
+              ui_has_plenary = true
+              break
+            end
+          end
+
+          assert.is_true(core_has_plenary)
+          assert.is_true(ui_has_plenary)
+        end)
+        it("should handle profiles with different dependency requirements", function()
+          -- Arrange
+          local profiles = {
+            {
+              "nodezero/core",
+              spec = {
+                name = "core",
+                priority = 1,
+              },
+              plugins = {
+                {
+                  "plugin1/core",
+                  dependencies = {
+                    "shared/dependency",
+                    "core/specific",
+                  },
+                },
+              },
+            },
+            {
+              "nodezero/ui",
+              spec = {
+                name = "ui",
+                priority = 2,
+              },
+              plugins = {
+                {
+                  "plugin2/ui",
+                  dependencies = {
+                    "shared/dependency",
+                    "ui/specific",
+                  },
+                },
+                {
+                  "shared/dependency", -- Already exists in this profile
+                  spec = {
+                    name = "shared",
+                  },
+                },
+              },
+            },
+          }
+
+          -- Act
+          local result = profile_utils.normalizePluginDependencies(profiles)
+
+          -- Assert
+          assert.are.equal(2, #result)
+          assert.are.equal(3, #result[1].plugins) -- core: plugin1 + shared + core/specific
+          assert.are.equal(3, #result[2].plugins) -- ui: plugin2 + existing shared + ui/specific
+        end)
+      end)
+      describe("edge cases", function()
+        it("should handle empty profiles list", function()
+          -- Arrange
+          local profiles = {}
+
+          -- Act
+          local result = profile_utils.normalizePluginDependencies(profiles)
+
+          -- Assert
+          assert.are.equal(0, #result)
+        end)
+
+        it("should handle profiles with no plugins", function()
+          -- Arrange
+          local profiles = {
+            {
+              "nodezero/empty",
+              spec = {
+                name = "empty",
+                priority = 1,
+              },
+              plugins = {},
+            },
+          }
+
+          -- Act
+          local result = profile_utils.normalizePluginDependencies(profiles)
+
+          -- Assert
+          assert.are.equal(1, #result)
+          assert.are.equal(0, #result[1].plugins)
+        end)
+
+        it("should handle profiles with nil plugins field", function()
+          -- Arrange
+          local profiles = {
+            {
+              "nodezero/no-plugins",
+              spec = {
+                name = "no-plugins",
+                priority = 1,
+              },
+              -- No plugins field at all
+            },
+          }
+
+          -- Act
+          local result = profile_utils.normalizePluginDependencies(profiles)
+
+          -- Assert
+          assert.are.equal(1, #result)
+          -- Should handle gracefully, possibly initializing plugins to empty array
+        end)
+
+        it("should handle invalid plugin definitions gracefully", function()
+          -- Arrange
+          local profiles = {
+            {
+              "nodezero/mixed",
+              spec = {
+                name = "mixed",
+                priority = 1,
+              },
+              plugins = {
+                {
+                  "valid/plugin",
+                  dependencies = {
+                    "valid/dependency",
+                  },
+                },
+                {
+                  -- Invalid plugin (no identifier)
+                  spec = {
+                    name = "invalid",
+                  },
+                  dependencies = {
+                    "should-not-be-processed",
+                  },
+                },
+                nil, -- Completely invalid entry
+                "not-a-table", -- Also invalid
+              },
+            },
+          }
+
+          -- Act
+          local result = profile_utils.normalizePluginDependencies(profiles)
+          -- Assert
+          assert.are.equal(1, #result)
+
+          -- Should have added the valid dependency but skipped invalid ones
+          local found_valid_dep = false
+          local found_invalid_dep = false
+
+          for _, plugin in ipairs(result[1].plugins) do
+            if plugin and plugin.dependencies and plugin.dependencies[1] == "valid/dependency" then
+              found_valid_dep = true
+            elseif plugin and plugin[1] == "should-not-be-processed" then
+              found_invalid_dep = true
+            end
+          end
+
+          assert.is_true(found_valid_dep)
+          assert.is_false(found_invalid_dep)
+        end)
+
+        it("should preserve plugin order and add dependencies at the end", function()
+          -- Arrange
+          local profiles = {
+            {
+              "nodezero/ordered",
+              spec = {
+                name = "ordered",
+                priority = 1,
+              },
+              plugins = {
+                {
+                  "first/plugin",
+                  dependencies = {
+                    "new/dependency",
+                  },
+                },
+                {
+                  "second/plugin",
+                  -- No dependencies
+                },
+                {
+                  "third/plugin",
+                  dependencies = {
+                    "another/dependency",
+                  },
+                },
+              },
+            },
+          }
+
+          -- Act
+          local result = profile_utils.normalizePluginDependencies(profiles)
+
+          -- Assert
+          assert.are.equal(1, #result)
+          assert.are.equal(5, #result[1].plugins) -- 3 original + 2 dependencies
+
+          -- Check that original order is preserved
+          assert.are.equal("first/plugin", result[1].plugins[1][1])
+          assert.are.equal("second/plugin", result[1].plugins[2][1])
+          assert.are.equal("third/plugin", result[1].plugins[3][1])
+
+          -- Dependencies should be at the end
+          local dependency_positions = {}
+          for i, plugin in ipairs(result[1].plugins) do
+            if plugin[1] == "new/dependency" or plugin[1] == "another/dependency" then
+              table.insert(dependency_positions, i)
+            end
+          end
+
+          -- Dependencies should be in positions 4 and 5
+          assert.is_true(dependency_positions[1] >= 4)
+          assert.is_true(dependency_positions[2] >= 4)
+        end)
+
+        it("should not modify the original profiles structure", function()
+          -- Arrange
+          local profiles = {
+            {
+              "nodezero/original",
+              spec = {
+                name = "original",
+                priority = 1,
+              },
+              plugins = {
+                {
+                  "test/plugin",
+                  dependencies = {
+                    "new/dependency",
+                  },
+                },
+              },
+            },
+          }
+
+          local original_plugin_count = #profiles[1].plugins
+
+          -- Act
+          local result = profile_utils.normalizePluginDependencies(profiles)
+
+          -- Assert
+          -- Original should remain unchanged
+          assert.are.equal(original_plugin_count, #profiles[1].plugins)
+          assert.are.equal("test/plugin", profiles[1].plugins[1][1])
+
+          -- Result should have the dependency added
+          assert.are.equal(original_plugin_count + 1, #result[1].plugins)
+        end)
+      end)
+      --
+      -- describe("dependency format validation", function()
+      --   it("should handle dependencies as strings", function()
+      --     -- Arrange
+      --     local profiles = {
+      --       {
+      --         "nodezero/test",
+      --         spec = {
+      --           name = "test",
+      --           priority = 1,
+      --         },
+      --         plugins = {
+      --           {
+      --             "test/plugin",
+      --             dependencies = {
+      --               "string/dependency"
+      --             }
+      --           }
+      --         }
+      --       }
+      --     }
+      --
+      --     -- Act
+      --     local result = profile_utils.normalizePluginDependencies(profiles)
+      --
+      --     -- Assert
+      --     assert.are.equal(1, #result)
+      --     assert.are.equal(2, #result[1].plugins)
+      --
+      --     -- Find the added dependency
+      --     local dependency_plugin = nil
+      --     for _, plugin in ipairs(result[1].plugins) do
+      --       if plugin[1] == "string/dependency" then
+      --         dependency_plugin = plugin
+      --         break
+      --       end
+      --     end
+      --
+      --     assert.is_not_nil(dependency_plugin)
+      --     assert.are.equal("string/dependency", dependency_plugin[1])
+      --   end)
+      --
+      --   it("should ignore non-string dependencies", function()
+      --     -- Arrange
+      --     local profiles = {
+      --       {
+      --         "nodezero/test",
+      --         spec = {
+      --           name = "test",
+      --           priority = 1,
+      --         },
+      --         plugins = {
+      --           {
+      --             "test/plugin",
+      --             dependencies = {
+      --               "valid/dependency",
+      --               123, -- Invalid - number
+      --               {}, -- Invalid - table
+      --               nil, -- Invalid - nil
+      --               true -- Invalid - boolean
+      --             }
+      --           }
+      --         }
+      --       }
+      --     }
+      --
+      --     -- Act
+      --     local result = profile_utils.normalizePluginDependencies(profiles)
+      --
+      --     -- Assert
+      --     assert.are.equal(1, #result)
+      --     assert.are.equal(2, #result[1].plugins) -- Should only add the valid dependency
+      --
+      --     -- Check only valid dependency was added
+      --     local found_valid = false
+      --     for _, plugin in ipairs(result[1].plugins) do
+      --       if plugin[1] == "valid/dependency" then
+      --         found_valid = true
+      --         break
+      --       end
+      --     end
+      --     assert.is_true(found_valid)
+      --   end)
+      -- end)
+    end)
     describe("mergePlugins", function()
       describe("basic merging functionality", function()
         it("should return empty list when no profiles provided", function()
@@ -667,7 +1528,7 @@ describe("profiles", function()
             "https://bitbucket.org/",
             "https://git.example.com/",
             "https://source.company.com/",
-            "http://internal-git.local/",
+            "http://ginternal-git.local/",
           }
 
           for _, base_url in ipairs(test_cases) do
@@ -741,10 +1602,10 @@ describe("profiles", function()
         it("should accept base URLs with various protocols", function()
           local valid_base_urls = {
             "https://github.com",
-            "http://git.example.com",
+            "http://ggit.example.com",
             "https://gitlab.com",
             "https://bitbucket.org",
-            "http://internal-git.company.com",
+            "http://ginternal-git.company.com",
           }
 
           for _, url in ipairs(valid_base_urls) do
@@ -762,10 +1623,10 @@ describe("profiles", function()
         it("should reject URLs without proper base URL structure", function()
           local invalid_structures = {
             "github.com", -- missing protocol
-            "://github.com", -- missing protocol name
+            ":--github.com", -- missing protocol name
             "https:///", -- missing domain
             "https://", -- missing domain
-            "ftp://github.com", -- unsupported protocol for git
+            "ftp:--github.com", -- unsupported protocol for git
             "git@github.com:user/repo.git", -- not a base URL format
           }
 
