@@ -39,9 +39,7 @@ All setup logic is defined in `lua/nodezero/hooks.lua`:
 
 ```lua
 -- lua/nodezero/hooks.lua
-local M = {}
-
-M.plugin_hooks = {
+return {
     ["catppuccin/nvim"] = {
         postSetup = function(pluginDef)
             vim.cmd.colorscheme("catppuccin")
@@ -54,25 +52,19 @@ M.plugin_hooks = {
         end
     },
 }
-
-function M.get_hooks(plugin_key)
-    return M.plugin_hooks[plugin_key] or {}
-end
-
-return M
 ```
 
 ## Hook Types
 
 ### preSetup Hook
 
-Executed before the main plugin setup logic. Useful for:
+Executed before the main plugin/profile setup logic. Useful for:
 - Setting up prerequisites
 - Modifying environment or global state
 - Logging setup initiation
 
 ```lua
-M.plugin_hooks = {
+return {
     ["example/plugin"] = {
         preSetup = function(pluginDef)
             -- Setup prerequisites
@@ -88,7 +80,7 @@ M.plugin_hooks = {
 Replaces the default plugin setup behavior. When defined, this function is called instead of the standard `require(plugin_name).setup(options)` pattern.
 
 ```lua
-M.plugin_hooks = {
+return {
     ["nvim-treesitter/nvim-treesitter"] = {
         config = function(pluginDef)
             -- Custom setup logic instead of default
@@ -106,7 +98,7 @@ Executed after the main plugin setup is complete. Useful for:
 - Configuring keymaps specific to the plugin
 
 ```lua
-M.plugin_hooks = {
+return {
     ["catppuccin/nvim"] = {
         postSetup = function(pluginDef)
             vim.cmd.colorscheme("catppuccin")
@@ -140,7 +132,7 @@ Plugins are identified by the first string in their definition array. For exampl
 The corresponding hook would be defined using the same identifier:
 
 ```lua
-M.plugin_hooks = {
+return {
     ["catppuccin/nvim"] = {  -- Same identifier
         postSetup = function(pluginDef) ... end
     }
@@ -185,105 +177,10 @@ end
 }
 
 -- In lua/nodezero/hooks.lua
-M.plugin_hooks = {
+return {
     ["folke/tokyonight.nvim"] = {
         postSetup = function(pluginDef)
             vim.cmd.colorscheme("tokyonight")
-        end
-    }
-}
-```
-
-### Plugin with Custom Configuration
-
-```lua
--- In a profile's plugins.lua
-{
-    "nvim-lualine/lualine.nvim",
-    spec = {
-        name = "lualine",
-    },
-    options = {
-        theme = "auto",
-        sections = {
-            lualine_a = {"mode"},
-            lualine_b = {"branch", "diff", "diagnostics"},
-            lualine_c = {"filename"},
-        },
-    },
-}
-
--- In lua/nodezero/hooks.lua
-M.plugin_hooks = {
-    ["nvim-lualine/lualine.nvim"] = {
-        config = function(pluginDef)
-            require("lualine").setup(pluginDef.options)
-        end
-    }
-}
-```
-
-### Plugin with Complete Lifecycle Hooks
-
-```lua
--- In a profile's plugins.lua
-{
-    "nvim-telescope/telescope.nvim",
-    spec = {
-        name = "telescope",
-    },
-    options = {
-        defaults = {
-            file_ignore_patterns = {"node_modules", ".git"},
-            layout_strategy = "horizontal",
-        },
-    },
-}
-
--- In lua/nodezero/hooks.lua
-M.plugin_hooks = {
-    ["nvim-telescope/telescope.nvim"] = {
-        preSetup = function(pluginDef)
-            -- Ensure dependencies are available
-            if not pcall(require, "plenary") then
-                error("Telescope requires plenary.nvim")
-            end
-        end,
-        
-        config = function(pluginDef)
-            require("telescope").setup(pluginDef.options)
-        end,
-        
-        postSetup = function(pluginDef)
-            -- Set up keymaps after plugin is loaded
-            local builtin = require("telescope.builtin")
-            vim.keymap.set("n", "<leader>ff", builtin.find_files, {})
-            vim.keymap.set("n", "<leader>fg", builtin.live_grep, {})
-            vim.keymap.set("n", "<leader>fb", builtin.buffers, {})
-        end
-    }
-}
-```
-
-### Plugin with No Default Setup
-
-```lua
--- In a profile's plugins.lua
-{
-    "nvim-lua/plenary.nvim",
-    spec = {
-        name = "plenary",
-    },
-    -- No options - this is a library plugin
-}
-
--- In lua/nodezero/hooks.lua
-M.plugin_hooks = {
-    ["nvim-lua/plenary.nvim"] = {
-        config = function(pluginDef)
-            -- This plugin doesn't need setup() to be called
-            -- Just ensure it's loaded
-            require("plenary")
         end
     }
 }
