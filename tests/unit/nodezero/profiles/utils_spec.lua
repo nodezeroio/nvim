@@ -1,4 +1,7 @@
 describe("profiles", function()
+  -- Add these tests to the existing tests/unit/nodezero/profiles/utils_spec.lua file
+  -- within the describe("profiles.utils") block
+
   describe("profiles.utils", function()
     local profile_utils
     local original_env
@@ -16,6 +19,612 @@ describe("profiles", function()
       vim.env = original_env
       package.loaded["nodezero"] = nil
     end)
+    describe("mergePlugins", function()
+      describe("basic merging functionality", function()
+        it("should return empty list when no profiles provided", function()
+          -- Arrange
+          local profiles = {}
+
+          -- Act
+          local result = profile_utils.mergePlugins(profiles)
+
+          -- Assert
+          assert.are.equal(0, #result)
+        end)
+
+        it("should return plugins from single profile unchanged", function()
+          -- Arrange
+          local profiles = {
+            {
+              "profile1/repo",
+              spec = { name = "profile1", priority = 1 },
+              plugins = {
+                {
+                  "catppuccin/nvim",
+                  spec = { name = "catppuccin" },
+                  options = { flavour = "mocha" },
+                },
+              },
+            },
+          }
+
+          -- Act
+          local result = profile_utils.mergePlugins(profiles)
+
+          -- Assert
+          assert.are.equal(1, #result)
+          assert.are.equal("catppuccin/nvim", result[1][1])
+          assert.are.equal("catppuccin", result[1].spec.name)
+          assert.are.equal("mocha", result[1].options.flavour)
+        end)
+
+        it("should combine unique plugins from multiple profiles", function()
+          -- Arrange
+          local profiles = {
+            {
+              "profile1/repo",
+              spec = { name = "profile1", priority = 1 },
+              plugins = {
+                {
+                  "catppuccin/nvim",
+                  spec = { name = "catppuccin" },
+                  options = { flavour = "mocha" },
+                },
+              },
+            },
+            {
+              "profile2/repo",
+              spec = { name = "profile2", priority = 2 },
+              plugins = {
+                {
+                  "nvim-treesitter/nvim-treesitter",
+                  spec = { name = "nvim-treesitter" },
+                  options = { highlight = { enable = true } },
+                },
+              },
+            },
+          }
+
+          -- Act
+          local result = profile_utils.mergePlugins(profiles)
+
+          -- Assert
+          assert.are.equal(2, #result)
+        end)
+      end)
+
+      describe("plugin merging with conflicts", function()
+        it("should merge options from multiple profiles for same plugin", function()
+          -- Arrange
+          local profiles = {
+            {
+              "profile1/repo",
+              spec = { name = "profile1", priority = 1 },
+              plugins = {
+                {
+                  "catppuccin/nvim",
+                  spec = { name = "catppuccin" },
+                  options = {
+                    flavour = "mocha",
+                    background = { dark = "mocha" },
+                  },
+                },
+              },
+            },
+            {
+              "profile2/repo",
+              spec = { name = "profile2", priority = 2 },
+              plugins = {
+                {
+                  "catppuccin/nvim",
+                  spec = { name = "catppuccin" },
+                  options = {
+                    transparent_background = true,
+                    background = { light = "latte" },
+                  },
+                },
+              },
+            },
+          }
+
+          -- Act
+          local result = profile_utils.mergePlugins(profiles)
+
+          -- Assert
+          assert.are.equal(1, #result)
+          local merged_plugin = result[1]
+          assert.are.equal("catppuccin/nvim", merged_plugin[1])
+          -- Higher priority profile (profile2) should override flavour
+          assert.are.equal("mocha", merged_plugin.options.flavour) -- from lower priority
+          assert.is_true(merged_plugin.options.transparent_background) -- from higher priority
+          -- Nested options should be merged
+          assert.are.equal("mocha", merged_plugin.options.background.dark)
+          assert.are.equal("latte", merged_plugin.options.background.light)
+        end)
+
+        it("should prioritize higher priority profile options in conflicts", function()
+          -- Arrange
+          local profiles = {
+            {
+              "profile1/repo",
+              spec = { name = "profile1", priority = 1 },
+              plugins = {
+                {
+                  "catppuccin/nvim",
+                  spec = { name = "catppuccin" },
+                  options = { flavour = "mocha" },
+                },
+              },
+            },
+            {
+              "profile2/repo",
+              spec = { name = "profile2", priority = 5 },
+              plugins = {
+                {
+                  "catppuccin/nvim",
+                  spec = { name = "catppuccin" },
+                  options = { flavour = "latte" },
+                },
+              },
+            },
+          }
+
+          -- Act
+          local result = profile_utils.mergePlugins(profiles)
+
+          -- Assert
+          assert.are.equal(1, #result)
+          -- Higher priority (5) should override lower priority (1)
+          assert.are.equal("latte", result[1].options.flavour)
+        end)
+
+        it("should handle plugins with different spec configurations", function()
+          -- Arrange
+          local profiles = {
+            {
+              "profile1/repo",
+              spec = { name = "profile1", priority = 1 },
+              plugins = {
+                {
+                  "catppuccin/nvim",
+                  spec = { name = "catppuccin" },
+                  options = { flavour = "mocha" },
+                },
+              },
+            },
+            {
+              "profile2/repo",
+              spec = { name = "profile2", priority = 2 },
+              plugins = {
+                {
+                  "catppuccin/nvim",
+                  spec = {
+                    name = "catppuccin",
+                    url = "https://custom.git/catppuccin/nvim",
+                  },
+                  options = { transparent_background = true },
+                },
+              },
+            },
+          }
+
+          -- Act
+          local result = profile_utils.mergePlugins(profiles)
+
+          -- Assert
+          assert.are.equal(1, #result)
+          local merged_plugin = result[1]
+          assert.are.equal("catppuccin", merged_plugin.spec.name)
+          assert.are.equal("https://custom.git/catppuccin/nvim", merged_plugin.spec.url)
+          assert.are.equal("mocha", merged_plugin.options.flavour)
+          assert.is_true(merged_plugin.options.transparent_background)
+        end)
+      end)
+
+      describe("profile sorting integration", function()
+        it("should respect profile priority order when merging", function()
+          -- Arrange - intentionally out of priority order
+          local profiles = {
+            {
+              "profile-low/repo",
+              spec = { name = "low", priority = 1 },
+              plugins = {
+                {
+                  "shared/plugin",
+                  spec = { name = "shared" },
+                  options = { value = "low_priority" },
+                },
+              },
+            },
+            {
+              "profile-high/repo",
+              spec = { name = "high", priority = 10 },
+              plugins = {
+                {
+                  "shared/plugin",
+                  spec = { name = "shared" },
+                  options = { value = "high_priority" },
+                },
+              },
+            },
+            {
+              "profile-medium/repo",
+              spec = { name = "medium", priority = 5 },
+              plugins = {
+                {
+                  "shared/plugin",
+                  spec = { name = "shared" },
+                  options = { value = "medium_priority" },
+                },
+              },
+            },
+          }
+
+          -- Act
+          local result = profile_utils.mergePlugins(profiles)
+
+          -- Assert
+          assert.are.equal(1, #result)
+          -- Highest priority (10) should win
+          assert.are.equal("high_priority", result[1].options.value)
+        end)
+
+        it("should handle profiles with no priority using lexicographical order", function()
+          -- Arrange
+          local profiles = {
+            {
+              "zebra/profile",
+              spec = { name = "zebra" },
+              plugins = {
+                {
+                  "shared/plugin",
+                  spec = { name = "shared" },
+                  options = { value = "zebra" },
+                },
+              },
+            },
+            {
+              "alpha/profile",
+              spec = { name = "alpha" },
+              plugins = {
+                {
+                  "shared/plugin",
+                  spec = { name = "shared" },
+                  options = { value = "alpha" },
+                },
+              },
+            },
+          }
+
+          -- Act
+          local result = profile_utils.mergePlugins(profiles)
+
+          -- Assert
+          assert.are.equal(1, #result)
+          -- Alpha should come first lexicographically, so alpha should win
+          assert.are.equal("alpha", result[1].options.value)
+        end)
+      end)
+
+      describe("complex merging scenarios", function()
+        it("should handle deep nested option merging", function()
+          -- Arrange
+          local profiles = {
+            {
+              "profile1/repo",
+              spec = { name = "profile1", priority = 1 },
+              plugins = {
+                {
+                  "complex/plugin",
+                  spec = { name = "complex" },
+                  options = {
+                    ui = {
+                      theme = "dark",
+                      colors = { primary = "blue" },
+                    },
+                    features = { autocomplete = true },
+                  },
+                },
+              },
+            },
+            {
+              "profile2/repo",
+              spec = { name = "profile2", priority = 2 },
+              plugins = {
+                {
+                  "complex/plugin",
+                  spec = { name = "complex" },
+                  options = {
+                    ui = {
+                      border = "rounded",
+                      colors = { secondary = "green" },
+                    },
+                    features = { snippets = true },
+                  },
+                },
+              },
+            },
+          }
+
+          -- Act
+          local result = profile_utils.mergePlugins(profiles)
+
+          -- Assert
+          assert.are.equal(1, #result)
+          local merged = result[1].options
+          assert.are.equal("dark", merged.ui.theme)
+          assert.are.equal("rounded", merged.ui.border)
+          assert.are.equal("blue", merged.ui.colors.primary)
+          assert.are.equal("green", merged.ui.colors.secondary)
+          assert.is_true(merged.features.autocomplete)
+          assert.is_true(merged.features.snippets)
+        end)
+
+        it("should handle plugins with identical specs from different profiles", function()
+          -- Arrange
+          local profiles = {
+            {
+              "profile1/repo",
+              spec = { name = "profile1", priority = 1 },
+              plugins = {
+                {
+                  "identical/plugin",
+                  spec = { name = "identical" },
+                  options = { setting1 = "value1" },
+                },
+                {
+                  "unique-to-profile1/plugin",
+                  spec = { name = "unique1" },
+                  options = { unique = "profile1" },
+                },
+              },
+            },
+            {
+              "profile2/repo",
+              spec = { name = "profile2", priority = 2 },
+              plugins = {
+                {
+                  "identical/plugin",
+                  spec = { name = "identical" },
+                  options = { setting2 = "value2" },
+                },
+                {
+                  "unique-to-profile2/plugin",
+                  spec = { name = "unique2" },
+                  options = { unique = "profile2" },
+                },
+              },
+            },
+          }
+
+          -- Act
+          local result = profile_utils.mergePlugins(profiles)
+
+          -- Assert
+          assert.are.equal(3, #result)
+
+          -- Find the merged identical plugin
+          local identical_plugin = nil
+          for _, plugin in ipairs(result) do
+            if plugin[1] == "identical/plugin" then
+              identical_plugin = plugin
+              break
+            end
+          end
+
+          assert.is_not_nil(identical_plugin)
+          assert.are.equal("value1", identical_plugin.options.setting1)
+          assert.are.equal("value2", identical_plugin.options.setting2)
+        end)
+
+        it("should handle profiles with no plugins", function()
+          -- Arrange
+          local profiles = {
+            {
+              "empty/profile",
+              spec = { name = "empty", priority = 1 },
+              plugins = {},
+            },
+            {
+              "profile-with-plugins/repo",
+              spec = { name = "with_plugins", priority = 2 },
+              plugins = {
+                {
+                  "solo/plugin",
+                  spec = { name = "solo" },
+                  options = { alone = true },
+                },
+              },
+            },
+          }
+
+          -- Act
+          local result = profile_utils.mergePlugins(profiles)
+
+          -- Assert
+          assert.are.equal(1, #result)
+          assert.are.equal("solo/plugin", result[1][1])
+          assert.is_true(result[1].options.alone)
+        end)
+
+        it("should handle plugins with missing options", function()
+          -- Arrange
+          local profiles = {
+            {
+              "profile1/repo",
+              spec = { name = "profile1", priority = 1 },
+              plugins = {
+                {
+                  "minimal/plugin",
+                  spec = { name = "minimal" },
+                  -- No options defined
+                },
+              },
+            },
+            {
+              "profile2/repo",
+              spec = { name = "profile2", priority = 2 },
+              plugins = {
+                {
+                  "minimal/plugin",
+                  spec = { name = "minimal" },
+                  options = { configured = true },
+                },
+              },
+            },
+          }
+
+          -- Act
+          local result = profile_utils.mergePlugins(profiles)
+
+          -- Assert
+          assert.are.equal(1, #result)
+          assert.are.equal("minimal/plugin", result[1][1])
+          assert.is_true(result[1].options.configured)
+        end)
+      end)
+
+      describe("edge cases", function()
+        it("should handle profiles with nil plugins field", function()
+          -- Arrange
+          local profiles = {
+            {
+              "profile-no-plugins/repo",
+              spec = { name = "no_plugins", priority = 1 },
+              -- No plugins field at all
+            },
+            {
+              "profile-with-plugins/repo",
+              spec = { name = "with_plugins", priority = 2 },
+              plugins = {
+                {
+                  "working/plugin",
+                  spec = { name = "working" },
+                  options = { works = true },
+                },
+              },
+            },
+          }
+
+          -- Act
+          local result = profile_utils.mergePlugins(profiles)
+
+          -- Assert
+          assert.are.equal(1, #result)
+          assert.are.equal("working/plugin", result[1][1])
+        end)
+
+        it("should handle plugins with same identifier but different repo paths", function()
+          -- Arrange
+          local profiles = {
+            {
+              "profile1/repo",
+              spec = { name = "profile1", priority = 1 },
+              plugins = {
+                {
+                  "owner1/plugin-name",
+                  spec = { name = "plugin-name" },
+                  options = { source = "owner1" },
+                },
+              },
+            },
+            {
+              "profile2/repo",
+              spec = { name = "profile2", priority = 2 },
+              plugins = {
+                {
+                  "owner2/plugin-name",
+                  spec = { name = "plugin-name" },
+                  options = { source = "owner2" },
+                },
+              },
+            },
+          }
+
+          -- Act
+          local result = profile_utils.mergePlugins(profiles)
+
+          -- Assert
+          -- These should be treated as different plugins since they have different repo paths
+          assert.are.equal(2, #result)
+        end)
+
+        it("should preserve plugin order within priority groups", function()
+          -- Arrange
+          local profiles = {
+            {
+              "profile1/repo",
+              spec = { name = "profile1", priority = 1 },
+              plugins = {
+                {
+                  "first/plugin",
+                  spec = { name = "first" },
+                  options = { order = 1 },
+                },
+                {
+                  "second/plugin",
+                  spec = { name = "second" },
+                  options = { order = 2 },
+                },
+              },
+            },
+          }
+
+          -- Act
+          local result = profile_utils.mergePlugins(profiles)
+
+          -- Assert
+          assert.are.equal(2, #result)
+          -- Order should be preserved
+          assert.are.equal("first/plugin", result[1][1])
+          assert.are.equal("second/plugin", result[2][1])
+        end)
+
+        it("should handle very large numbers of profiles and plugins", function()
+          -- Arrange
+          local profiles = {}
+          for i = 1, 100 do
+            local profile = {
+              "profile" .. i .. "/repo",
+              spec = { name = "profile" .. i, priority = i },
+              plugins = {
+                {
+                  "shared/plugin",
+                  spec = { name = "shared" },
+                  options = { value = i },
+                },
+                {
+                  "unique" .. i .. "/plugin",
+                  spec = { name = "unique" .. i },
+                  options = { unique_value = i },
+                },
+              },
+            }
+            table.insert(profiles, profile)
+          end
+
+          -- Act
+          local result = profile_utils.mergePlugins(profiles)
+
+          -- Assert
+          assert.are.equal(101, #result) -- 1 shared + 100 unique
+
+          -- Find the shared plugin
+          local shared_plugin = nil
+          for _, plugin in ipairs(result) do
+            if plugin[1] == "shared/plugin" then
+              shared_plugin = plugin
+              break
+            end
+          end
+
+          assert.is_not_nil(shared_plugin)
+          -- Highest priority (100) should win
+          assert.are.equal(100, shared_plugin.options.value)
+        end)
+      end)
+    end)
+
     describe("profiles.utils.getBaseRepositoryURL", function()
       describe("environment variable handling", function()
         it("should return custom base URL when NODEZERO_NVIM_PROFILE_REPOSITORY is set to valid base URL", function()

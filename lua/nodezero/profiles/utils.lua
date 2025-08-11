@@ -2,6 +2,63 @@ local M = {}
 
 local utils = require("nodezero.utils")
 
+-- Helper function to deep copy any table/value
+local function deep_copy_table(obj)
+  if type(obj) ~= "table" then
+    return obj
+  end
+
+  local copy = {}
+  for key, value in pairs(obj) do
+    copy[key] = deep_copy_table(value)
+  end
+
+  return copy
+end
+
+-- Helper function to deep copy a plugin definition
+local function deep_copy_plugin(plugin)
+  if type(plugin) ~= "table" then
+    return plugin
+  end
+
+  local copy = {}
+  for key, value in pairs(plugin) do
+    copy[key] = deep_copy_table(value)
+  end
+
+  return copy
+end
+
+-- Helper function to merge two plugin definitions
+-- higher_priority_plugin takes precedence over lower_priority_plugin
+local function merge_plugin_definitions(higher_priority_plugin, lower_priority_plugin)
+  local merged = deep_copy_plugin(lower_priority_plugin)
+
+  -- Merge spec if both exist
+  if higher_priority_plugin.spec and merged.spec then
+    merged.spec = vim.tbl_deep_extend("force", merged.spec, higher_priority_plugin.spec)
+  elseif higher_priority_plugin.spec then
+    merged.spec = deep_copy_table(higher_priority_plugin.spec)
+  end
+
+  -- Merge options if both exist
+  if higher_priority_plugin.options and merged.options then
+    merged.options = vim.tbl_deep_extend("force", merged.options, higher_priority_plugin.options)
+  elseif higher_priority_plugin.options then
+    merged.options = deep_copy_table(higher_priority_plugin.options)
+  end
+
+  -- Copy any other fields from higher priority plugin
+  for key, value in pairs(higher_priority_plugin) do
+    if key ~= "spec" and key ~= "options" and key ~= 1 then
+      merged[key] = deep_copy_table(value)
+    end
+  end
+
+  return merged
+end
+
 function M.getBaseRepositoryURL()
   -- Get the environment variable
   local env_url = vim.env.NODEZERO_NVIM_PROFILE_REPOSITORY
@@ -96,8 +153,54 @@ function M.sort(profiles)
 
   return sorted_profiles
 end
+-- Implementation for the mergePlugins function
+-- Add this to lua/nodezero/profiles/utils.lua replacing the existing stub
 
+function M.mergePlugins(profiles)
+  -- Handle empty profiles list
+  if not profiles or #profiles == 0 then
+    return {}
+  end
 
-function M.mergePlugins(profiles) end
+  -- Sort profiles using existing sort function
+  local sorted_profiles = M.sort(profiles)
 
+  -- Track plugins by their identifier (first string element)
+  local plugin_map = {}
+  local plugin_order = {} -- Track the order plugins were first encountered
+
+  -- Process profiles in sorted order (highest priority first due to sort function)
+  for _, profile in ipairs(sorted_profiles) do
+    local plugins = profile.plugins
+
+    -- Skip profiles with no plugins or nil plugins field
+    if plugins and type(plugins) == "table" then
+      for _, plugin_def in ipairs(plugins) do
+        -- Validate plugin definition
+        if plugin_def and plugin_def[1] and type(plugin_def[1]) == "string" then
+          local plugin_id = plugin_def[1]
+
+          if plugin_map[plugin_id] then
+            -- Plugin already exists, merge with existing definition
+            -- Since profiles are sorted by priority (highest first),
+            -- we need to merge in reverse order: existing (higher priority) over new (lower priority)
+            plugin_map[plugin_id] = merge_plugin_definitions(plugin_map[plugin_id], plugin_def)
+          else
+            -- New plugin, add to map and track order
+            plugin_map[plugin_id] = deep_copy_plugin(plugin_def)
+            table.insert(plugin_order, plugin_id)
+          end
+        end
+      end
+    end
+  end
+
+  -- Convert map back to array, preserving original encounter order
+  local result = {}
+  for _, plugin_id in ipairs(plugin_order) do
+    table.insert(result, plugin_map[plugin_id])
+  end
+
+  return result
+end
 return M
