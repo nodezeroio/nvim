@@ -4,3 +4,4 @@
 tests/xdg/
 luacov.stats.out
 todo.md
+profile-config.lua
