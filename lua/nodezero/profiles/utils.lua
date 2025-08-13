@@ -153,6 +153,9 @@ function M.sort(profiles)
 
   return sorted_profiles
 end
+
+
+function M.normalizeProfileDefinitions(profiles) end
 -- Implementation for normalizePluginDependencies function
 -- Add this to lua/nodezero/profiles/utils.lua replacing the existing stub
 
