@@ -19,6 +19,542 @@ describe("profiles", function()
       vim.env = original_env
       package.loaded["nodezero"] = nil
     end)
+    describe("normalizeProfileDefinitions", function()
+      describe("basic functionality", function()
+        it("should return empty list when no profiles provided", function()
+          -- Arrange
+          local profiles = {}
+
+          -- Act
+          local result = profile_utils.normalizeProfileDefinitions(profiles)
+
+          -- Assert
+          assert.are.equal(0, #result)
+        end)
+
+        it("should return profile unchanged when spec.name is already set", function()
+          -- Arrange
+          local profiles = {
+            {
+              "nodezero/core",
+              spec = {
+                name = "custom-name",
+                priority = 1,
+                vcs = "git",
+              },
+            },
+          }
+
+          -- Act
+          local result = profile_utils.normalizeProfileDefinitions(profiles)
+
+          -- Assert
+          assert.are.equal(1, #result)
+          assert.are.equal("nodezero/core", result[1][1])
+          assert.are.equal("custom-name", result[1].spec.name)
+          assert.are.equal(1, result[1].spec.priority)
+          assert.are.equal("git", result[1].spec.vcs)
+        end)
+
+        it("should set spec.name from profile path when not provided", function()
+          -- Arrange
+          local profiles = {
+            {
+              "nodezero/core",
+              spec = {
+                priority = 1,
+                vcs = "git",
+              },
+            },
+          }
+
+          -- Act
+          local result = profile_utils.normalizeProfileDefinitions(profiles)
+
+          -- Assert
+          assert.are.equal(1, #result)
+          assert.are.equal("nodezero/core", result[1][1])
+          assert.are.equal("nodezero-core", result[1].spec.name)
+          assert.are.equal(1, result[1].spec.priority)
+          assert.are.equal("git", result[1].spec.vcs)
+        end)
+
+        it("should create spec table when it doesn't exist", function()
+          -- Arrange
+          local profiles = {
+            {
+              "nodezero/core",
+              -- No spec field at all
+            },
+          }
+
+          -- Act
+          local result = profile_utils.normalizeProfileDefinitions(profiles)
+
+          -- Assert
+          assert.are.equal(1, #result)
+          assert.are.equal("nodezero/core", result[1][1])
+          assert.is_not_nil(result[1].spec)
+          assert.are.equal("nodezero-core", result[1].spec.name)
+        end)
+
+        it("should handle spec table with nil name", function()
+          -- Arrange
+          local profiles = {
+            {
+              "nodezero/core",
+              spec = {
+                name = nil,
+                priority = 5,
+              },
+            },
+          }
+
+          -- Act
+          local result = profile_utils.normalizeProfileDefinitions(profiles)
+
+          -- Assert
+          assert.are.equal(1, #result)
+          assert.are.equal("nodezero-core", result[1].spec.name)
+          assert.are.equal(5, result[1].spec.priority)
+        end)
+      end)
+
+      describe("path normalization", function()
+        it("should replace single slash with dash", function()
+          -- Arrange
+          local profiles = {
+            {
+              "owner/repo",
+              spec = {},
+            },
+          }
+
+          -- Act
+          local result = profile_utils.normalizeProfileDefinitions(profiles)
+
+          -- Assert
+          assert.are.equal("owner-repo", result[1].spec.name)
+        end)
+
+        it("should replace multiple slashes with dashes", function()
+          -- Arrange
+          local profiles = {
+            {
+              "organization/team/project",
+              spec = {},
+            },
+          }
+
+          -- Act
+          local result = profile_utils.normalizeProfileDefinitions(profiles)
+
+          -- Assert
+          assert.are.equal("organization-team-project", result[1].spec.name)
+        end)
+
+        it("should handle paths with no slashes", function()
+          -- Arrange
+          local profiles = {
+            {
+              "standalone-repo",
+              spec = {},
+            },
+          }
+
+          -- Act
+          local result = profile_utils.normalizeProfileDefinitions(profiles)
+
+          -- Assert
+          assert.are.equal("standalone-repo", result[1].spec.name)
+        end)
+
+        it("should handle paths with leading slash", function()
+          -- Arrange
+          local profiles = {
+            {
+              "/nodezero/core",
+              spec = {},
+            },
+          }
+
+          -- Act
+          local result = profile_utils.normalizeProfileDefinitions(profiles)
+
+          -- Assert
+          assert.are.equal("-nodezero-core", result[1].spec.name)
+        end)
+
+        it("should handle paths with trailing slash", function()
+          -- Arrange
+          local profiles = {
+            {
+              "nodezero/core/",
+              spec = {},
+            },
+          }
+
+          -- Act
+          local result = profile_utils.normalizeProfileDefinitions(profiles)
+
+          -- Assert
+          assert.are.equal("nodezero-core-", result[1].spec.name)
+        end)
+
+        it("should handle paths with consecutive slashes", function()
+          -- Arrange
+          local profiles = {
+            {
+              "nodezero//core///extra",
+              spec = {},
+            },
+          }
+
+          -- Act
+          local result = profile_utils.normalizeProfileDefinitions(profiles)
+
+          -- Assert
+          assert.are.equal("nodezero--core---extra", result[1].spec.name)
+        end)
+
+        it("should handle complex paths with multiple segments", function()
+          -- Arrange
+          local profiles = {
+            {
+              "org/team/subteam/project/config",
+              spec = {
+                priority = 10,
+              },
+            },
+          }
+
+          -- Act
+          local result = profile_utils.normalizeProfileDefinitions(profiles)
+
+          -- Assert
+          assert.are.equal("org-team-subteam-project-config", result[1].spec.name)
+          assert.are.equal(10, result[1].spec.priority)
+        end)
+      end)
+
+      describe("multiple profiles handling", function()
+        it("should process multiple profiles independently", function()
+          -- Arrange
+          local profiles = {
+            {
+              "nodezero/core",
+              spec = {
+                priority = 1,
+              },
+            },
+            {
+              "nodezero/ui",
+              spec = {
+                name = "custom-ui-name",
+                priority = 2,
+              },
+            },
+            {
+              "organization/team/project",
+              spec = {
+                vcs = "local",
+              },
+            },
+          }
+
+          -- Act
+          local result = profile_utils.normalizeProfileDefinitions(profiles)
+
+          -- Assert
+          assert.are.equal(3, #result)
+
+          -- First profile: should get normalized name
+          assert.are.equal("nodezero/core", result[1][1])
+          assert.are.equal("nodezero-core", result[1].spec.name)
+          assert.are.equal(1, result[1].spec.priority)
+
+          -- Second profile: should keep existing name
+          assert.are.equal("nodezero/ui", result[2][1])
+          assert.are.equal("custom-ui-name", result[2].spec.name)
+          assert.are.equal(2, result[2].spec.priority)
+
+          -- Third profile: should get normalized name
+          assert.are.equal("organization/team/project", result[3][1])
+          assert.are.equal("organization-team-project", result[3].spec.name)
+          assert.are.equal("local", result[3].spec.vcs)
+        end)
+
+        it("should handle mix of profiles with and without spec", function()
+          -- Arrange
+          local profiles = {
+            {
+              "profile/with-spec",
+              spec = {
+                priority = 5,
+              },
+            },
+            {
+              "profile/without-spec",
+              -- No spec field
+            },
+            {
+              "profile/empty-spec",
+              spec = {},
+            },
+          }
+
+          -- Act
+          local result = profile_utils.normalizeProfileDefinitions(profiles)
+
+          -- Assert
+          assert.are.equal(3, #result)
+          assert.are.equal("profile-with-spec", result[1].spec.name)
+          assert.are.equal(5, result[1].spec.priority)
+          assert.are.equal("profile-without-spec", result[2].spec.name)
+          assert.are.equal("profile-empty-spec", result[3].spec.name)
+        end)
+      end)
+
+      describe("immutability", function()
+        it("should not modify the original profiles array", function()
+          -- Arrange
+          local profiles = {
+            {
+              "nodezero/core",
+              spec = {
+                priority = 1,
+              },
+            },
+          }
+          local original_spec_name = profiles[1].spec.name
+          local original_profile_path = profiles[1][1]
+
+          -- Act
+          local result = profile_utils.normalizeProfileDefinitions(profiles)
+
+          -- Assert
+          -- Original should remain unchanged
+          assert.are.equal(original_profile_path, profiles[1][1])
+          assert.are.equal(original_spec_name, profiles[1].spec.name) -- Should still be nil
+          assert.are.equal(1, profiles[1].spec.priority)
+
+          -- Result should have the normalized name
+          assert.are.equal("nodezero-core", result[1].spec.name)
+          assert.are.equal(1, result[1].spec.priority)
+        end)
+
+        it("should create deep copies of profile objects", function()
+          -- Arrange
+          local profiles = {
+            {
+              "nodezero/core",
+              spec = {
+                priority = 1,
+                nested = {
+                  option = "value",
+                },
+              },
+              plugins = {
+                { "some/plugin" },
+              },
+            },
+          }
+
+          -- Act
+          local result = profile_utils.normalizeProfileDefinitions(profiles)
+
+          -- Assert
+          -- Modify the original
+          profiles[1].spec.priority = 999
+          profiles[1].spec.nested.option = "modified"
+          profiles[1].plugins[1][1] = "modified/plugin"
+
+          -- Result should not be affected
+          assert.are.equal(1, result[1].spec.priority)
+          assert.are.equal("value", result[1].spec.nested.option)
+          assert.are.equal("some/plugin", result[1].plugins[1][1])
+        end)
+
+        it("should handle profiles with existing name without mutation", function()
+          -- Arrange
+          local profiles = {
+            {
+              "nodezero/core",
+              spec = {
+                name = "existing-name",
+                priority = 1,
+              },
+            },
+          }
+
+          -- Act
+          local result = profile_utils.normalizeProfileDefinitions(profiles)
+
+          -- Assert
+          -- Original should remain unchanged
+          assert.are.equal("existing-name", profiles[1].spec.name)
+
+          -- Result should also have the existing name (unchanged)
+          assert.are.equal("existing-name", result[1].spec.name)
+
+          -- Should be different objects
+          assert.are_not.equal(profiles[1], result[1])
+          assert.are_not.equal(profiles[1].spec, result[1].spec)
+        end)
+      end)
+
+      describe("edge cases", function()
+        it("should handle profiles with invalid or missing profile path", function()
+          -- Arrange
+          local profiles = {
+            {
+              nil, -- Invalid profile path
+              spec = {
+                priority = 1,
+              },
+            },
+            {
+              "", -- Empty profile path
+              spec = {
+                priority = 2,
+              },
+            },
+            {
+              123, -- Non-string profile path
+              spec = {
+                priority = 3,
+              },
+            },
+          }
+
+          -- Act & Assert
+          -- Should handle gracefully without throwing errors
+          local result = profile_utils.normalizeProfileDefinitions(profiles)
+
+          -- The function should handle these gracefully, possibly skipping invalid entries
+          -- or using fallback behavior
+          assert.is_table(result)
+        end)
+
+        it("should handle nil spec field", function()
+          -- Arrange
+          local profiles = {
+            {
+              "nodezero/core",
+              spec = nil,
+            },
+          }
+
+          -- Act
+          local result = profile_utils.normalizeProfileDefinitions(profiles)
+
+          -- Assert
+          assert.are.equal(1, #result)
+          assert.is_not_nil(result[1].spec)
+          assert.are.equal("nodezero-core", result[1].spec.name)
+        end)
+
+        it("should handle profile with no fields except path", function()
+          -- Arrange
+          local profiles = {
+            {
+              "minimal/profile",
+            },
+          }
+
+          -- Act
+          local result = profile_utils.normalizeProfileDefinitions(profiles)
+
+          -- Assert
+          assert.are.equal(1, #result)
+          assert.are.equal("minimal/profile", result[1][1])
+          assert.is_not_nil(result[1].spec)
+          assert.are.equal("minimal-profile", result[1].spec.name)
+        end)
+
+        it("should handle empty string profile path", function()
+          -- Arrange
+          local profiles = {
+            {
+              "",
+              spec = {},
+            },
+          }
+
+          -- Act
+          local result = profile_utils.normalizeProfileDefinitions(profiles)
+
+          -- Assert
+          assert.are.equal(1, #result)
+          assert.are.equal("", result[1].spec.name)
+        end)
+
+        it("should handle very long profile paths", function()
+          -- Arrange
+          local long_path = "very/long/path/with/many/segments/that/goes/on/and/on/project"
+          local profiles = {
+            {
+              long_path,
+              spec = {},
+            },
+          }
+
+          -- Act
+          local result = profile_utils.normalizeProfileDefinitions(profiles)
+
+          -- Assert
+          local expected_name = string.gsub(long_path, "/", "-")
+          assert.are.equal(expected_name, result[1].spec.name)
+        end)
+
+        it("should handle profile path with special characters", function()
+          -- Arrange
+          local profiles = {
+            {
+              "org-name/repo_name.with.dots",
+              spec = {},
+            },
+          }
+
+          -- Act
+          local result = profile_utils.normalizeProfileDefinitions(profiles)
+
+          -- Assert
+          -- Only slashes should be replaced, other characters preserved
+          assert.are.equal("org-name-repo_name.with.dots", result[1].spec.name)
+        end)
+
+        it("should preserve all other spec fields when adding name", function()
+          -- Arrange
+          local profiles = {
+            {
+              "nodezero/core",
+              spec = {
+                priority = 5,
+                vcs = "local",
+                custom_field = "custom_value",
+                nested_field = {
+                  sub_option = true,
+                  sub_array = { 1, 2, 3 },
+                },
+              },
+            },
+          }
+
+          -- Act
+          local result = profile_utils.normalizeProfileDefinitions(profiles)
+
+          -- Assert
+          assert.are.equal("nodezero-core", result[1].spec.name)
+          assert.are.equal(5, result[1].spec.priority)
+          assert.are.equal("local", result[1].spec.vcs)
+          assert.are.equal("custom_value", result[1].spec.custom_field)
+          assert.is_true(result[1].spec.nested_field.sub_option)
+          assert.are.same({ 1, 2, 3 }, result[1].spec.nested_field.sub_array)
+        end)
+      end)
+    end)
+
     describe("normalizePluginDependencies", function()
       describe("basic dependency resolution", function()
         it("should add missing dependency to profile", function()

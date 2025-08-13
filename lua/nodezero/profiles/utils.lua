@@ -153,9 +153,45 @@ function M.sort(profiles)
 
   return sorted_profiles
 end
+function M.normalizeProfileDefinitions(profiles)
+  -- Handle empty profiles list
+  if not profiles or #profiles == 0 then
+    return {}
+  end
 
+  -- Create result array to hold normalized profiles
+  local result = {}
 
-function M.normalizeProfileDefinitions(profiles) end
+  -- Process each profile
+  for i, profile in ipairs(profiles) do
+    -- Skip invalid profiles (must be a table with a valid string path)
+    if type(profile) == "table" and profile[1] and type(profile[1]) == "string" then
+      -- Deep copy the profile to avoid mutating the original
+      local normalized_profile = deep_copy_table(profile)
+
+      -- Ensure spec table exists
+      if not normalized_profile.spec then
+        normalized_profile.spec = {}
+      elseif type(normalized_profile.spec) ~= "table" then
+        -- Handle case where spec is not a table (e.g., nil)
+        normalized_profile.spec = {}
+      end
+
+      -- Check if spec.name needs to be set
+      if not normalized_profile.spec.name then
+        -- Generate name from profile path by replacing '/' with '-'
+        local profile_path = normalized_profile[1]
+        normalized_profile.spec.name = string.gsub(profile_path, "/", "-")
+      end
+
+      -- Add the normalized profile to result
+      table.insert(result, normalized_profile)
+    end
+    -- Invalid profiles are silently skipped
+  end
+
+  return result
+end
 -- Implementation for normalizePluginDependencies function
 -- Add this to lua/nodezero/profiles/utils.lua replacing the existing stub
 
@@ -275,7 +311,6 @@ function M.normalizePluginDependencies(profiles)
 end
 
 -- Implementation for the mergePlugins function
--- Add this to lua/nodezero/profiles/utils.lua replacing the existing stub
 function M.mergePlugins(profiles)
   -- Handle empty profiles list
   if not profiles or #profiles == 0 then
