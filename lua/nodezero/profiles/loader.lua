@@ -1,7 +1,24 @@
 local M = {}
 M.loaded = {}
 
+local profile_utils = require("nodezero.profiles.utils")
+local profiles_path = nil
 function M.setup()
+  profiles_path = profile_utils.getProfilesPath()
+  -- Add profiles path to Lua's package path
+  local lua_path = profiles_path .. "/?.lua"
+  local init_path = profiles_path .. "/?/init.lua"
+
+  if not package.path:find(lua_path, 1, true) then
+    package.path = package.path .. ";" .. lua_path
+  end
+
+  if not package.path:find(init_path, 1, true) then
+    package.path = package.path .. ";" .. init_path
+  end
+  return M
+end
+function M.load()
   -- Step 1: Retrieve profiles to load from 'nodezero.profiles.profile-config'
   local profiles = {}
   local ok, profile_config = pcall(require, "nodezero.profiles.profile-config")
@@ -15,10 +32,8 @@ function M.setup()
   end
 
   -- Step 2: Retrieve the repository base URL
-  local profile_utils = require("nodezero.profiles.utils")
   local base_repository_url = profile_utils.getBaseRepositoryURL()
   -- Step 3: Retrieve the profile path
-  local profiles_path = profile_utils.getProfilesPath()
 
   -- Step 4: Normalize the profile definitions
   profiles = profile_utils.normalizeProfileDefinitions(profiles)

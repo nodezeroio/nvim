@@ -92,7 +92,7 @@ describe("nodezero.profiles.loader", function()
         mock_requires["nodezero.profiles.profile-config"] = {}
 
         -- Act
-        local result = loader.setup()
+        local result = loader.setup().load()
 
         -- Assert
         assert.are.equal(loader, result)
@@ -103,7 +103,7 @@ describe("nodezero.profiles.loader", function()
         mock_requires["nodezero.profiles.profile-config"] = {}
 
         -- Act
-        loader.setup()
+        loader.setup().load()
 
         -- Assert
         assert.are.same({}, loader.loaded)
@@ -119,7 +119,7 @@ describe("nodezero.profiles.loader", function()
         end)
         mock_requires["nodezero.profiles.profile-config"] = expected_merged_plugins
         -- Act
-        loader.setup()
+        loader.setup().load()
         -- Assert
         assert.spy(mock_profile_utils.mergePlugins).was_called()
         assert.are.same(expected_merged_plugins, loader.loaded)
@@ -138,7 +138,7 @@ describe("nodezero.profiles.loader", function()
         end)
 
         -- Act
-        loader.setup()
+        loader.setup().load()
 
         -- Assert
         assert.spy(mock_profile_utils.normalizeProfileDefinitions).was_called_with(test_profiles)
@@ -150,7 +150,7 @@ describe("nodezero.profiles.loader", function()
 
         -- Act & Assert
         assert.has_no.errors(function()
-          loader.setup()
+          loader.setup().load()
         end)
         assert.are.same({}, loader.loaded)
       end)
@@ -183,7 +183,7 @@ describe("nodezero.profiles.loader", function()
           return {}
         end)
         -- Act
-        loader.setup()
+        loader.setup().load()
         -- Assert
         assert.spy(mock_profile_utils.getBaseRepositoryURL).was_called()
         assert.spy(mock_profile_utils.getProfilesPath).was_called()
@@ -208,7 +208,7 @@ describe("nodezero.profiles.loader", function()
         end)
 
         -- Act
-        loader.setup()
+        loader.setup().load()
 
         -- Assert
         assert.spy(mock_utils.fs.ensurePath).was_called_with("/profiles/test-profile", false)
@@ -234,7 +234,7 @@ describe("nodezero.profiles.loader", function()
         end)
 
         -- Act
-        loader.setup()
+        loader.setup().load()
 
         -- Assert
         assert.spy(mock_utils.vcs.cloneRepo).was_called_with({
@@ -263,7 +263,7 @@ describe("nodezero.profiles.loader", function()
         end)
 
         -- Act
-        loader.setup()
+        loader.setup().load()
 
         -- Assert
         assert.spy(mock_utils.vcs.cloneRepo).was_called_with({
@@ -287,7 +287,7 @@ describe("nodezero.profiles.loader", function()
 
         -- Act & Assert
         assert.has_error(function()
-          loader.setup()
+          loader.setup().load()
         end)
       end)
 
@@ -305,7 +305,7 @@ describe("nodezero.profiles.loader", function()
         end)
 
         -- Act
-        loader.setup()
+        loader.setup().load()
 
         -- Assert
         assert.spy(mock_utils.vcs.cloneRepo).was_not_called()
@@ -322,7 +322,7 @@ describe("nodezero.profiles.loader", function()
 
         -- Act & Assert
         assert.has_error(function()
-          loader.setup()
+          loader.setup().load()
         end, "Invalid VCS type 'invalid' for profile nodezero/test. Must be nil, 'git', or 'file'")
       end)
 
@@ -338,7 +338,7 @@ describe("nodezero.profiles.loader", function()
 
         -- Act & Assert
         assert.has_no.errors(function()
-          loader.setup()
+          loader.setup().load()
         end)
       end)
 
@@ -354,7 +354,7 @@ describe("nodezero.profiles.loader", function()
 
         -- Act & Assert
         assert.has_no.errors(function()
-          loader.setup()
+          loader.setup().load()
         end)
       end)
 
@@ -370,7 +370,7 @@ describe("nodezero.profiles.loader", function()
 
         -- Act & Assert
         assert.has_no.errors(function()
-          loader.setup()
+          loader.setup().load()
         end)
       end)
     end)
@@ -400,7 +400,7 @@ describe("nodezero.profiles.loader", function()
         end)
 
         -- Act
-        loader.setup()
+        loader.setup().load()
 
         -- Assert
         assert.spy(mock_utils.vcs.cloneRepo).was_called_with({
@@ -431,7 +431,7 @@ describe("nodezero.profiles.loader", function()
         end)
 
         -- Act
-        loader.setup()
+        loader.setup().load()
 
         -- Assert
         assert.spy(mock_utils.vcs.cloneRepo).was_called_with({
@@ -453,7 +453,7 @@ describe("nodezero.profiles.loader", function()
 
         -- Act & Assert
         assert.has_no.errors(function()
-          loader.setup()
+          loader.setup().load()
         end)
       end)
     end)
@@ -474,7 +474,7 @@ describe("nodezero.profiles.loader", function()
         end
 
         -- Act
-        loader.setup()
+        loader.setup().load()
 
         -- Assert
         assert.are.same(test_plugins, test_profiles[1].plugins)
@@ -493,7 +493,7 @@ describe("nodezero.profiles.loader", function()
 
         -- Act & Assert
         assert.has_no.errors(function()
-          loader.setup()
+          loader.setup().load()
         end)
       end)
 
@@ -510,7 +510,7 @@ describe("nodezero.profiles.loader", function()
 
         -- Act & Assert
         assert.has_no.errors(function()
-          loader.setup()
+          loader.setup().load()
         end)
       end)
 
@@ -535,7 +535,7 @@ describe("nodezero.profiles.loader", function()
 
         -- Act & Assert
         assert.has_no.errors(function()
-          loader.setup()
+          loader.setup().load()
         end)
       end)
 
@@ -560,7 +560,7 @@ describe("nodezero.profiles.loader", function()
 
         -- Act & Assert
         assert.has_no.errors(function()
-          loader.setup()
+          loader.setup().load()
         end)
       end)
     end)
@@ -587,7 +587,7 @@ describe("nodezero.profiles.loader", function()
 
         -- Act & Assert
         assert.has_error(function()
-          loader.setup()
+          loader.setup().load()
         end, "Failed to clone profile nodezero/test")
       end)
     end)
@@ -610,7 +610,7 @@ describe("nodezero.profiles.loader", function()
         end
 
         -- Act
-        loader.setup()
+        loader.setup().load()
 
         -- Assert
         assert.are.same(core_plugins, test_profiles[1].plugins)
@@ -648,7 +648,7 @@ describe("nodezero.profiles.loader", function()
 
         -- Act & Assert
         assert.has_error(function()
-          loader.setup()
+          loader.setup().load()
         end, "Failed to clone profile nodezero/failing")
       end)
     end)
@@ -686,7 +686,7 @@ describe("nodezero.profiles.loader", function()
         end
 
         -- Act
-        local result = loader.setup()
+        local result = loader.setup().load()
 
         -- Assert
         assert.are.equal(loader, result)
