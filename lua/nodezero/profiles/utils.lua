@@ -163,7 +163,7 @@ function M.normalizeProfileDefinitions(profiles)
   local result = {}
 
   -- Process each profile
-  for i, profile in ipairs(profiles) do
+  for _, profile in ipairs(profiles) do
     -- Skip invalid profiles (must be a table with a valid string path)
     if type(profile) == "table" and profile[1] and type(profile[1]) == "string" then
       -- Deep copy the profile to avoid mutating the original
