@@ -85,7 +85,10 @@ function M.getProfilesPath()
   local env_path = vim.env.NODEZERO_NVIM_PROFILES_PATH
 
   if env_path and env_path ~= "" then
-    -- Return the custom path from environment variable
+    -- Return the custom path from environment variable with no trailing slash
+    if env_path:sub(-1) == "/" then
+      env_path = env_path:sub(1, -2)
+    end
     return env_path
   else
     -- Return the default path with proper expansion
@@ -316,7 +319,6 @@ function M.mergePlugins(profiles)
   if not profiles or #profiles == 0 then
     return {}
   end
-
   -- Sort profiles using existing sort function
   local sorted_profiles = M.sort(profiles)
 
@@ -327,14 +329,12 @@ function M.mergePlugins(profiles)
   -- Process profiles in sorted order (highest priority first due to sort function)
   for _, profile in ipairs(sorted_profiles) do
     local plugins = profile.plugins
-
     -- Skip profiles with no plugins or nil plugins field
     if plugins and type(plugins) == "table" then
       for _, plugin_def in ipairs(plugins) do
         -- Validate plugin definition
         if plugin_def and plugin_def[1] and type(plugin_def[1]) == "string" then
           local plugin_id = plugin_def[1]
-
           if plugin_map[plugin_id] then
             -- Plugin already exists, merge with existing definition
             -- Since profiles are sorted by priority (highest first),
@@ -349,13 +349,11 @@ function M.mergePlugins(profiles)
       end
     end
   end
-
   -- Convert map back to array, preserving original encounter order
   local result = {}
   for _, plugin_id in ipairs(plugin_order) do
     table.insert(result, plugin_map[plugin_id])
   end
-
   return result
 end
 return M

@@ -1,3 +1,1 @@
-require("utils.global").setup()
-
--- require("profiles").setup()
+local profiles = require('nodezero.profiles')

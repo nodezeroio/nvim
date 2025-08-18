@@ -16,7 +16,7 @@ NodeZeroVim.debug = require("nodezero.debug")
 NodeZeroVim.utils = require("nodezero.utils")
 NodeZeroVim.profiles = {}
 
-NodeZeroVim.profiles = require("nodezero.profiles")
+-- NodeZeroVim.profiles = require("nodezero.profiles")
 
 -- Initialize the global object
 function M.setup()

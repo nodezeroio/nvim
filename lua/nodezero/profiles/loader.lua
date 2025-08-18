@@ -1,45 +1,34 @@
 local M = {}
-M.loaded = {}
+M.plugins = {}
 
+local utils = require("nodezero.utils")
 local profile_utils = require("nodezero.profiles.utils")
 local profiles_path = nil
 function M.setup()
   profiles_path = profile_utils.getProfilesPath()
-  -- Add profiles path to Lua's package path
-  local lua_path = profiles_path .. "/?.lua"
-  local init_path = profiles_path .. "/?/init.lua"
-
-  if not package.path:find(lua_path, 1, true) then
-    package.path = package.path .. ";" .. lua_path
-  end
-
-  if not package.path:find(init_path, 1, true) then
-    package.path = package.path .. ";" .. init_path
-  end
+  utils.updatePackagePath(profiles_path)
+  M.loaded = {
+    profiles = {},
+    plugins = {},
+  }
   return M
 end
+
 function M.load()
   -- Step 1: Retrieve profiles to load from 'nodezero.profiles.profile-config'
   local profiles = {}
-  local ok, profile_config = pcall(require, "nodezero.profiles.profile-config")
-  if ok and profile_config then
-    profiles = profile_config
-  end
+  local ok, profile_configs = pcall(require, "nodezero.profiles.profile-configs")
   -- Return early if no profiles to process
-  if not profiles or #profiles == 0 then
-    M.loaded = {}
+  if not ok or #profile_configs == 0 then
     return M
   end
-
   -- Step 2: Retrieve the repository base URL
   local base_repository_url = profile_utils.getBaseRepositoryURL()
   -- Step 3: Retrieve the profile path
 
   -- Step 4: Normalize the profile definitions
-  profiles = profile_utils.normalizeProfileDefinitions(profiles)
-
+  profile_configs = profile_utils.normalizeProfileDefinitions(profile_configs)
   -- Step 5: Normalize the plugin dependencies
-  profiles = profile_utils.normalizePluginDependencies(profiles)
 
   -- Step 6: Retrieve the overrides from 'nodezero.overrides', if it exists
   local overrides = {}
@@ -48,15 +37,12 @@ function M.load()
     overrides = override_config
   end
 
-  -- Get utility modules
-  local utils = require("nodezero.utils")
-
   -- Process each profile
-  for _, profile in ipairs(profiles) do
-    local profile_name = profile.spec.name
+  for _, profile_config in ipairs(profile_configs) do
+    local profile_name = profile_config.spec.name
     local profile_path = profiles_path .. "/" .. profile_name
-    local profile_repo_path = profile[1]
-    local vcs_type = profile.spec.vcs
+    local profile_repo_path = profile_config[1]
+    local vcs_type = profile_config.spec.vcs
 
     -- Validate VCS type
     if vcs_type ~= nil and vcs_type ~= "git" and vcs_type ~= "file" then
@@ -97,25 +83,13 @@ function M.load()
         error(string.format("Failed to clone profile %s", profile_repo_path))
       end
     end
-
-    -- Step 9: Load profile config if it exists
-    local config_module_name = profile_name .. ".config"
-    local config_ok, config_err = pcall(require, config_module_name) -- luacheck: ignore config_err
-    if not config_ok then -- luacheck: ignore 542
-      -- Config loading failed or doesn't exist - continue silently
-    end
-    -- Step 10: Load profile plugins if they exist
-    local plugins_module_name = profile_name .. ".plugins"
-    local plugins_ok, profile_plugins = pcall(require, plugins_module_name)
-    if plugins_ok and profile_plugins then
-      profile.plugins = profile_plugins
-    end
+    utils.updatePackagePath(profiles_path .. "/" .. profile_name)
+    local profile_to_add = require(profile_name)
+    table.insert(profiles, profile_to_add)
   end
-
-  -- Step 11: Merge plugins and set to M.loaded
-  M.loaded = profile_utils.mergePlugins(profiles)
-
-  -- Step 12: Return M
+  -- Step 11: Merge plugins and set to M.plugins
+  M.loaded.profiles = profile_utils.normalizePluginDependencies(profiles)
+  M.loaded.plugins = profile_utils.mergePlugins(profiles)
   return M
 end
 return M

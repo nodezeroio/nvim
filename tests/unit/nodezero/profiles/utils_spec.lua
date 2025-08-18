@@ -2934,7 +2934,7 @@ describe("profiles", function()
         local result = profile_utils.getProfilesPath()
 
         -- Assert
-        assert.are.equal(custom_path, result)
+        assert.are.equal(custom_path:sub(1, -2), result)
       end)
 
       it("should be consistent across multiple calls when env var is not set", function()

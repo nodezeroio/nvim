@@ -1,4 +1,3 @@
--- tests/unit/nodezero/profiles/loader_spec.lua
 describe("nodezero.profiles.loader", function()
   local loader
   local mock_utils
@@ -9,9 +8,9 @@ describe("nodezero.profiles.loader", function()
 
   before_each(function()
     -- Clear all loaded modules
+    local original_profile_utils = require("nodezero.profiles.utils")
     package.loaded["nodezero.profiles.loader"] = nil
-    package.loaded["nodezero.profiles.utils"] = nil
-    package.loaded["nodezero.profiles.profile-config"] = nil
+    package.loaded["nodezero.profiles.profile-configs"] = nil
     package.loaded["nodezero.overrides"] = nil
     package.loaded["nodezero"] = nil
 
@@ -20,6 +19,9 @@ describe("nodezero.profiles.loader", function()
 
     -- Create mocks for dependencies
     mock_utils = {
+      updatePackagePath = function(path)
+        return path
+      end,
       fs = {
         ensurePath = function()
           return true
@@ -39,15 +41,9 @@ describe("nodezero.profiles.loader", function()
       getProfilesPath = function()
         return "/test/profiles/path"
       end,
-      normalizeProfileDefinitions = function(profiles)
-        return profiles
-      end,
-      normalizePluginDependencies = function(profiles)
-        return profiles
-      end,
-      mergePlugins = function(profiles)
-        return profiles
-      end,
+      normalizeProfileDefinitions = original_profile_utils.normalizeProfileDefinitions,
+      normalizePluginDependencies = original_profile_utils.normalizePluginDependencies,
+      mergePlugins = original_profile_utils.mergePlugins,
     }
 
     mock_git_utils = {
@@ -66,6 +62,7 @@ describe("nodezero.profiles.loader", function()
       return original_require(module_name)
     end
 
+    package.loaded["nodezero.profiles.utils"] = nil
     -- Set up module mocks
     mock_requires["nodezero.utils"] = mock_utils
     mock_requires["nodezero.profiles.utils"] = mock_profile_utils
@@ -89,7 +86,7 @@ describe("nodezero.profiles.loader", function()
     describe("basic functionality", function()
       it("should return M when called", function()
         -- Arrange
-        mock_requires["nodezero.profiles.profile-config"] = {}
+        mock_requires["nodezero.profiles.profile-configs"] = {}
 
         -- Act
         local result = loader.setup().load()
@@ -97,42 +94,51 @@ describe("nodezero.profiles.loader", function()
         -- Assert
         assert.are.equal(loader, result)
       end)
-
       it("should handle empty profile config", function()
         -- Arrange
-        mock_requires["nodezero.profiles.profile-config"] = {}
+        mock_requires["nodezero.profiles.profile-configs"] = {}
 
         -- Act
         loader.setup().load()
 
         -- Assert
-        assert.are.same({}, loader.loaded)
+        assert.are.same({ plugins = {}, profiles = {} }, loader.loaded)
       end)
-
       it("should set loaded to result of mergePlugins", function()
         -- Arrange
         local expected_merged_plugins = {
           { "test/plugin", spec = { name = "test" } },
         }
+        local profile_configs = {
+          {
+            "test/profile",
+          },
+        }
         mock_profile_utils.mergePlugins = spy.new(function()
           return expected_merged_plugins
         end)
-        mock_requires["nodezero.profiles.profile-config"] = expected_merged_plugins
+        mock_requires["nodezero.profiles.profile-configs"] = profile_configs
+        mock_requires["test-profile"] = {
+          "test/profile",
+          plugins = expected_merged_plugins,
+        }
+        mock_requires["test"] = expected_merged_plugins[1]
         -- Act
         loader.setup().load()
         -- Assert
         assert.spy(mock_profile_utils.mergePlugins).was_called()
-        assert.are.same(expected_merged_plugins, loader.loaded)
+        assert.are.same(expected_merged_plugins, loader.loaded.plugins)
       end)
     end)
 
     describe("profile config loading", function()
-      it("should load profiles from nodezero.profiles.profile-config", function()
+      it("should load profiles from nodezero.profiles.profile-configs", function()
         -- Arrange
         local test_profiles = {
           { "nodezero/test-profile", spec = { name = "test" } },
         }
-        mock_requires["nodezero.profiles.profile-config"] = test_profiles
+        mock_requires["nodezero.profiles.profile-configs"] = test_profiles
+        mock_requires["test"] = test_profiles[1]
         mock_profile_utils.normalizeProfileDefinitions = spy.new(function(profiles)
           return profiles
         end)
@@ -144,22 +150,22 @@ describe("nodezero.profiles.loader", function()
         assert.spy(mock_profile_utils.normalizeProfileDefinitions).was_called_with(test_profiles)
       end)
 
-      it("should handle missing profile-config gracefully", function()
+      it("should handle missing profile-configss gracefully", function()
         -- Arrange
-        mock_requires["nodezero.profiles.profile-config"] = nil
+        mock_requires["nodezero.profiles.profile-configss"] = nil
 
         -- Act & Assert
         assert.has_no.errors(function()
           loader.setup().load()
         end)
-        assert.are.same({}, loader.loaded)
+        assert.are.same({ plugins = {}, profiles = {} }, loader.loaded)
       end)
     end)
 
     describe("utility function calls", function()
       it("should call all required utility functions", function()
         -- Arrange
-        mock_requires["nodezero.profiles.profile-config"] = {
+        mock_requires["nodezero.profiles.profile-configs"] = {
           {
             "nodezeroio/nvim-profiles-core",
             spec = {
@@ -167,6 +173,7 @@ describe("nodezero.profiles.loader", function()
             },
           },
         }
+        mock_requires["core"] = function() end
         mock_profile_utils.getBaseRepositoryURL = spy.new(function()
           return "https://github.com/"
         end)
@@ -192,14 +199,14 @@ describe("nodezero.profiles.loader", function()
         assert.spy(mock_profile_utils.mergePlugins).was_called()
       end)
     end)
-
     describe("profile directory management", function()
       it("should check if profile path exists using ensurePath", function()
         -- Arrange
         local test_profiles = {
           { "nodezero/test", spec = { name = "test-profile" } },
         }
-        mock_requires["nodezero.profiles.profile-config"] = test_profiles
+        mock_requires["nodezero.profiles.profile-configs"] = test_profiles
+        mock_requires["test-profile"] = test_profiles[1]
         mock_profile_utils.getProfilesPath = function()
           return "/profiles"
         end
@@ -219,7 +226,8 @@ describe("nodezero.profiles.loader", function()
         local test_profiles = {
           { "nodezero/test", spec = { name = "test-profile", vcs = "git" } },
         }
-        mock_requires["nodezero.profiles.profile-config"] = test_profiles
+        mock_requires["nodezero.profiles.profile-configs"] = test_profiles
+        mock_requires["test-profile"] = {}
         mock_profile_utils.getProfilesPath = function()
           return "/profiles"
         end
@@ -248,7 +256,8 @@ describe("nodezero.profiles.loader", function()
         local test_profiles = {
           { "nodezero/test", spec = { name = "test-profile" } },
         }
-        mock_requires["nodezero.profiles.profile-config"] = test_profiles
+        mock_requires["nodezero.profiles.profile-configs"] = test_profiles
+        mock_requires["test-profile"] = {}
         mock_profile_utils.getProfilesPath = function()
           return "/profiles"
         end
@@ -277,7 +286,7 @@ describe("nodezero.profiles.loader", function()
         local test_profiles = {
           { "local/test", spec = { name = "test-profile", vcs = "file" } },
         }
-        mock_requires["nodezero.profiles.profile-config"] = test_profiles
+        mock_requires["nodezero.profiles.profile-configs"] = test_profiles
         mock_profile_utils.getProfilesPath = function()
           return "/profiles"
         end
@@ -296,7 +305,8 @@ describe("nodezero.profiles.loader", function()
         local test_profiles = {
           { "nodezero/test", spec = { name = "test-profile" } },
         }
-        mock_requires["nodezero.profiles.profile-config"] = test_profiles
+        mock_requires["nodezero.profiles.profile-configs"] = test_profiles
+        mock_requires["test-profile"] = {}
         mock_utils.fs.ensurePath = function()
           return true
         end -- Path exists
@@ -311,14 +321,13 @@ describe("nodezero.profiles.loader", function()
         assert.spy(mock_utils.vcs.cloneRepo).was_not_called()
       end)
     end)
-
     describe("vcs validation", function()
       it("should throw error for invalid vcs value", function()
         -- Arrange
         local test_profiles = {
           { "nodezero/test", spec = { name = "test-profile", vcs = "invalid" } },
         }
-        mock_requires["nodezero.profiles.profile-config"] = test_profiles
+        mock_requires["nodezero.profiles.profile-configs"] = test_profiles
 
         -- Act & Assert
         assert.has_error(function()
@@ -331,7 +340,8 @@ describe("nodezero.profiles.loader", function()
         local test_profiles = {
           { "nodezero/test", spec = { name = "test-profile", vcs = nil } },
         }
-        mock_requires["nodezero.profiles.profile-config"] = test_profiles
+        mock_requires["nodezero.profiles.profile-configs"] = test_profiles
+        mock_requires["test-profile"] = test_profiles[1]
         mock_utils.fs.ensurePath = function()
           return true
         end
@@ -347,7 +357,8 @@ describe("nodezero.profiles.loader", function()
         local test_profiles = {
           { "nodezero/test", spec = { name = "test-profile", vcs = "git" } },
         }
-        mock_requires["nodezero.profiles.profile-config"] = test_profiles
+        mock_requires["nodezero.profiles.profile-configs"] = test_profiles
+        mock_requires["test-profile"] = {}
         mock_utils.fs.ensurePath = function()
           return true
         end
@@ -363,7 +374,8 @@ describe("nodezero.profiles.loader", function()
         local test_profiles = {
           { "nodezero/test", spec = { name = "test-profile", vcs = "file" } },
         }
-        mock_requires["nodezero.profiles.profile-config"] = test_profiles
+        mock_requires["nodezero.profiles.profile-configs"] = test_profiles
+        mock_requires["test-profile"] = {}
         mock_utils.fs.ensurePath = function()
           return true
         end
@@ -374,7 +386,6 @@ describe("nodezero.profiles.loader", function()
         end)
       end)
     end)
-
     describe("overrides handling", function()
       it("should use override repository when available", function()
         -- Arrange
@@ -384,8 +395,9 @@ describe("nodezero.profiles.loader", function()
         local overrides = {
           ["nodezero/test"] = "custom/repo",
         }
-        mock_requires["nodezero.profiles.profile-config"] = test_profiles
+        mock_requires["nodezero.profiles.profile-configs"] = test_profiles
         mock_requires["nodezero.overrides"] = overrides
+        mock_requires["test-profile"] = {}
         mock_profile_utils.getProfilesPath = function()
           return "/profiles"
         end
@@ -415,8 +427,9 @@ describe("nodezero.profiles.loader", function()
           { "nodezero/test", spec = { name = "test-profile" } },
         }
         local overrides = {} -- Empty overrides
-        mock_requires["nodezero.profiles.profile-config"] = test_profiles
+        mock_requires["nodezero.profiles.profile-configs"] = test_profiles
         mock_requires["nodezero.overrides"] = overrides
+        mock_requires["test-profile"] = {}
         mock_profile_utils.getProfilesPath = function()
           return "/profiles"
         end
@@ -445,7 +458,8 @@ describe("nodezero.profiles.loader", function()
         local test_profiles = {
           { "nodezero/test", spec = { name = "test-profile" } },
         }
-        mock_requires["nodezero.profiles.profile-config"] = test_profiles
+        mock_requires["nodezero.profiles.profile-configs"] = test_profiles
+        mock_requires["test-profile"] = {}
         mock_requires["nodezero.overrides"] = nil -- No overrides module
         mock_utils.fs.ensurePath = function()
           return true
@@ -457,36 +471,35 @@ describe("nodezero.profiles.loader", function()
         end)
       end)
     end)
-
     describe("profile config and plugins loading", function()
       it("should load profile plugins when they exist", function()
         -- Arrange
         local test_profiles = {
-          { "nodezero/test", spec = { name = "test-profile" } },
+          {
+            "nodezero/test",
+            spec = { name = "test-profile" },
+            plugins = { { "test/plugin", spec = { name = "test" } } },
+          },
         }
-        local test_plugins = {
-          { "test/plugin", spec = { name = "test" } },
-        }
-        mock_requires["nodezero.profiles.profile-config"] = test_profiles
-        mock_requires["test-profile.plugins"] = test_plugins
+        mock_requires["nodezero.profiles.profile-configs"] = test_profiles
+        mock_requires["test-profile"] = test_profiles[1]
         mock_utils.fs.ensurePath = function()
           return true
         end
 
         -- Act
-        loader.setup().load()
-
+        local result = loader.setup().load()
         -- Assert
-        assert.are.same(test_plugins, test_profiles[1].plugins)
+        assert.are.same(test_profiles[1].plugins, result.loaded.plugins)
       end)
-
       it("should handle missing config gracefully", function()
         -- Arrange
         local test_profiles = {
           { "nodezero/test", spec = { name = "test-profile" } },
         }
-        mock_requires["nodezero.profiles.profile-config"] = test_profiles
+        mock_requires["nodezero.profiles.profile-configs"] = test_profiles
         mock_requires["test-profile.config"] = nil
+        mock_requires["test-profile"] = {}
         mock_utils.fs.ensurePath = function()
           return true
         end
@@ -502,8 +515,9 @@ describe("nodezero.profiles.loader", function()
         local test_profiles = {
           { "nodezero/test", spec = { name = "test-profile" } },
         }
-        mock_requires["nodezero.profiles.profile-config"] = test_profiles
+        mock_requires["nodezero.profiles.profile-configs"] = test_profiles
         mock_requires["test-profile.plugins"] = nil
+        mock_requires["test-profile"] = {}
         mock_utils.fs.ensurePath = function()
           return true
         end
@@ -519,7 +533,8 @@ describe("nodezero.profiles.loader", function()
         local test_profiles = {
           { "nodezero/test", spec = { name = "test-profile" } },
         }
-        mock_requires["nodezero.profiles.profile-config"] = test_profiles
+        mock_requires["nodezero.profiles.profile-configs"] = test_profiles
+        mock_requires["test-profile"] = {}
         mock_utils.fs.ensurePath = function()
           return true
         end
@@ -544,7 +559,8 @@ describe("nodezero.profiles.loader", function()
         local test_profiles = {
           { "nodezero/test", spec = { name = "test-profile" } },
         }
-        mock_requires["nodezero.profiles.profile-config"] = test_profiles
+        mock_requires["nodezero.profiles.profile-configs"] = test_profiles
+        mock_requires["test-profile"] = {}
         mock_utils.fs.ensurePath = function()
           return true
         end
@@ -564,14 +580,13 @@ describe("nodezero.profiles.loader", function()
         end)
       end)
     end)
-
     describe("git clone error handling", function()
       it("should throw error when git clone fails", function()
         -- Arrange
         local test_profiles = {
           { "nodezero/test", spec = { name = "test-profile" } },
         }
-        mock_requires["nodezero.profiles.profile-config"] = test_profiles
+        mock_requires["nodezero.profiles.profile-configs"] = test_profiles
         mock_profile_utils.getProfilesPath = function()
           return "/profiles"
         end
@@ -591,7 +606,6 @@ describe("nodezero.profiles.loader", function()
         end, "Failed to clone profile nodezero/test")
       end)
     end)
-
     describe("multiple profiles handling", function()
       it("should process multiple profiles correctly", function()
         -- Arrange
@@ -602,19 +616,26 @@ describe("nodezero.profiles.loader", function()
         local core_plugins = { { "core/plugin", spec = { name = "core" } } }
         local ui_plugins = { { "ui/plugin", spec = { name = "ui" } } }
 
-        mock_requires["nodezero.profiles.profile-config"] = test_profiles
-        mock_requires["core.plugins"] = core_plugins
-        mock_requires["ui.plugins"] = ui_plugins
+        mock_requires["core"] = function() end
+        mock_requires["nodezero.profiles.profile-configs"] = test_profiles
+        mock_requires["core"] = {
+          "nodezero/core",
+          plugins = core_plugins,
+        }
+        mock_requires["ui"] = {
+          "nodezero/ui",
+          plugins = ui_plugins,
+        }
         mock_utils.fs.ensurePath = function()
           return true
         end
 
         -- Act
-        loader.setup().load()
+        local result = loader.setup().load()
 
         -- Assert
-        assert.are.same(core_plugins, test_profiles[1].plugins)
-        assert.are.same(ui_plugins, test_profiles[2].plugins)
+        assert.are.same(core_plugins[1], result.loaded.plugins[1])
+        assert.are.same(ui_plugins[1], result.loaded.plugins[2])
       end)
 
       it("should continue processing after one profile fails", function()
@@ -623,7 +644,7 @@ describe("nodezero.profiles.loader", function()
           { "nodezero/failing", spec = { name = "failing" } },
           { "nodezero/working", spec = { name = "working" } },
         }
-        mock_requires["nodezero.profiles.profile-config"] = test_profiles
+        mock_requires["nodezero.profiles.profile-configs"] = test_profiles
         mock_profile_utils.getProfilesPath = function()
           return "/profiles"
         end
@@ -662,22 +683,12 @@ describe("nodezero.profiles.loader", function()
         local test_plugins = {
           { "complete/plugin", spec = { name = "complete" } },
         }
-        local merged_result = {
-          { "merged/plugin", spec = { name = "merged" } },
-        }
 
-        mock_requires["nodezero.profiles.profile-config"] = test_profiles
-        mock_requires["complete-profile.plugins"] = test_plugins
-        mock_requires["complete-profile.config"] = function() end
-        mock_profile_utils.getProfilesPath = function()
-          return "/profiles"
-        end
-        mock_profile_utils.getBaseRepositoryURL = function()
-          return "https://github.com/"
-        end
-        mock_profile_utils.mergePlugins = function()
-          return merged_result
-        end
+        mock_requires["nodezero.profiles.profile-configs"] = test_profiles
+        mock_requires["complete-profile"] = {
+          "nodezero/complete",
+          plugins = test_plugins,
+        }
         mock_utils.fs.ensurePath = function()
           error("Path does not exist")
         end
@@ -687,11 +698,9 @@ describe("nodezero.profiles.loader", function()
 
         -- Act
         local result = loader.setup().load()
-
         -- Assert
         assert.are.equal(loader, result)
-        assert.are.same(merged_result, loader.loaded)
-        assert.are.same(test_plugins, test_profiles[1].plugins)
+        assert.are.same(test_plugins, loader.loaded.plugins)
       end)
     end)
   end)
