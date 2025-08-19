@@ -10,14 +10,12 @@ describe("profiles", function()
       package.loaded["nodezero"] = nil
       -- Store original environment
       original_env = vim.env
-      require("nodezero")
       profile_utils = require("nodezero.profiles.utils")
     end)
 
     after_each(function()
       -- Restore original environment
       vim.env = original_env
-      package.loaded["nodezero"] = nil
     end)
     describe("normalizeProfileDefinitions", function()
       describe("basic functionality", function()
@@ -2081,24 +2079,6 @@ describe("profiles", function()
       end)
 
       describe("invalid URL handling", function()
-        local mock_log_calls
-        local original_debug
-        before_each(function()
-          -- Mock the debug.log function to capture log calls
-          mock_log_calls = {}
-          original_debug = NodeZeroVim.debug
-          NodeZeroVim.debug = {
-            log = function(msg, level)
-              table.insert(mock_log_calls, { msg = msg, level = level })
-            end,
-          }
-        end)
-
-        after_each(function()
-          -- Restore original debug
-          NodeZeroVim.debug = original_debug
-        end)
-
         it("should fallback to GitHub and log warning for obviously invalid URLs", function()
           local invalid_urls = {
             "not-a-url",

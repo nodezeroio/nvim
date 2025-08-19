@@ -11,7 +11,6 @@ describe("nodezero.profiles.loader", function()
     local original_profile_utils = require("nodezero.profiles.utils")
     package.loaded["nodezero.profiles.loader"] = nil
     package.loaded["nodezero.profiles.profile-configs"] = nil
-    package.loaded["nodezero.overrides"] = nil
     package.loaded["nodezero"] = nil
 
     -- Initialize the global object
@@ -396,7 +395,6 @@ describe("nodezero.profiles.loader", function()
           ["nodezero/test"] = "custom/repo",
         }
         mock_requires["nodezero.profiles.profile-configs"] = test_profiles
-        mock_requires["nodezero.overrides"] = overrides
         mock_requires["test-profile"] = {}
         mock_profile_utils.getProfilesPath = function()
           return "/profiles"
@@ -412,7 +410,7 @@ describe("nodezero.profiles.loader", function()
         end)
 
         -- Act
-        loader.setup().load()
+        loader.setup().load(overrides)
 
         -- Assert
         assert.spy(mock_utils.vcs.cloneRepo).was_called_with({
@@ -428,7 +426,6 @@ describe("nodezero.profiles.loader", function()
         }
         local overrides = {} -- Empty overrides
         mock_requires["nodezero.profiles.profile-configs"] = test_profiles
-        mock_requires["nodezero.overrides"] = overrides
         mock_requires["test-profile"] = {}
         mock_profile_utils.getProfilesPath = function()
           return "/profiles"
@@ -444,31 +441,13 @@ describe("nodezero.profiles.loader", function()
         end)
 
         -- Act
-        loader.setup().load()
+        loader.setup().load(overrides)
 
         -- Assert
         assert.spy(mock_utils.vcs.cloneRepo).was_called_with({
           repo = "https://github.com/nodezero/test",
           path = "/profiles/test-profile",
         })
-      end)
-
-      it("should handle missing overrides module gracefully", function()
-        -- Arrange
-        local test_profiles = {
-          { "nodezero/test", spec = { name = "test-profile" } },
-        }
-        mock_requires["nodezero.profiles.profile-configs"] = test_profiles
-        mock_requires["test-profile"] = {}
-        mock_requires["nodezero.overrides"] = nil -- No overrides module
-        mock_utils.fs.ensurePath = function()
-          return true
-        end
-
-        -- Act & Assert
-        assert.has_no.errors(function()
-          loader.setup().load()
-        end)
       end)
     end)
     describe("profile config and plugins loading", function()

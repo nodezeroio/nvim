@@ -14,7 +14,10 @@ function M.setup()
   return M
 end
 
-function M.load()
+function M.load(overrides)
+  if overrides == nil then
+    overrides = {}
+  end
   -- Step 1: Retrieve profiles to load from 'nodezero.profiles.profile-config'
   local profiles = {}
   local ok, profile_configs = pcall(require, "nodezero.profiles.profile-configs")
@@ -29,13 +32,6 @@ function M.load()
   -- Step 4: Normalize the profile definitions
   profile_configs = profile_utils.normalizeProfileDefinitions(profile_configs)
   -- Step 5: Normalize the plugin dependencies
-
-  -- Step 6: Retrieve the overrides from 'nodezero.overrides', if it exists
-  local overrides = {}
-  local ok_overrides, override_config = pcall(require, "nodezero.overrides")
-  if ok_overrides and override_config then
-    overrides = override_config
-  end
 
   -- Process each profile
   for _, profile_config in ipairs(profile_configs) do
