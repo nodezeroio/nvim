@@ -1,12 +1,6 @@
 local M = {}
 
-local hooks = {}
-
-function M.setup()
-  return M
-end
-
-function M.load()
+function M.setup(plugins, hooks)
   return M
 end
 
