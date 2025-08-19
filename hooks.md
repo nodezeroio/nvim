@@ -35,7 +35,7 @@ Plugin definitions in profile configurations contain only declarative configurat
 
 ### Global Hooks File
 
-All setup logic is defined in `lua/nodezero/hooks.lua`:
+All setup logic is defined, by default, in `lua/nodezero/hooks.lua`:
 
 ```lua
 -- lua/nodezero/hooks.lua
@@ -53,6 +53,8 @@ return {
     },
 }
 ```
+
+The path to the hooks can be overridden using `NODEZERO_NVIM_HOOKS_PATH`
 
 ## Hook Types
 

@@ -19,4 +19,8 @@ function M.updatePackagePath(path)
   return M
 end
 
+function M.getHooks()
+
+end
+
 return M
