@@ -2,53 +2,70 @@
 
 ## Overview
 
-This Neovim configuration uses a custom, lightweight plugin management system designed for simplicity and control. The system is built around the core Neovim functionality without relying on external plugin managers like LazyVim.
+This Neovim configuration uses a custom, lightweight plugin management system designed for simplicity and control.
 
 ## Architecture
 
 ### Directory Structure
 
 ```
-$HOME/.config/thomas.nvim/lua
+$HOME/.config/nodezero.nvim/lua
 .
-├── profiles
-│   ├── core
-│   │   ├── config
-│   │   │   ├── autocmds.lua
-│   │   │   ├── init.lua
-│   │   │   ├── keymaps.lua
-│   │   │   └── options.lua
-│   │   └── plugins.lua
-│   ├── init.lua
-│   └── overrides.lua
-└── utils
-    ├── global.lua
-    └── plugin-manager.lua
+└── nodezero
+    ├── debug.lua
+    ├── init.lua
+    ├── overrides.lua
+    ├── overrides.lua.example
+    ├── plugins
+    │   └── loader.lua
+    ├── profile-config.lua
+    ├── profile-config.lua.example
+    ├── profiles
+    │   ├── config.lua
+    │   ├── init.lua
+    │   ├── loader.lua
+    │   ├── overrides.lua.example
+    │   ├── profile-config.lua
+    │   ├── profile-config.lua.example
+    │   └── utils.lua
+    └── utils
+        ├── filesystem.lua
+        ├── git.lua
+        └── init.lua
 ```
 
 ### Plugin Storage
 
-All plugins are cloned to: `$HOME/.local/share/thomas.nvim/plugins/`
+All plugins are cloned to: `$XDG_DATA_HOME/nodezero.nvim/plugins/`
 
-Each plugin gets its own directory: `$HOME/.local/share/thomas.nvim/plugins/[plugin-name]/`
+Each plugin gets its own directory: `$XDG_DATA_HOME/nodezero.nvim/plugins/[plugin-name]/`
+
+The plugins directory can be overridden using `NODEZERO_NVIM_PLUGINS_DIRECTORY`
 
 ## How the Plugin Manager Works
 
 ### Core Functionality
 
-The plugin manager (`utils/plugin-manager.lua`) provides a single main function:
+The plugin loader (`nodezero.plugins.loader`) provides a single main function:
 
 ```lua
-plugin_manager.ensure(spec)
+plugin_loader.setup(plugins, hooks)
 ```
 
 This function:
 
-1. **Checks if plugin exists**: Looks for the plugin directory in `~/.local/share/thomas.nvim/plugins/`
-2. **Clones if needed**: If the plugin doesn't exist, clones it using `git clone --depth=1`
-3. **Adds to runtime path**: Prepends the plugin directory to Neovim's `runtimepath`
-4. **Provides feedback**: Shows notifications during installation
+1. **Checks that the plugin directory exists**: Looks for the directory `$XDG_DATA_HOME/nodezero.nvim/plugins/`, using `nodezero.utils.ensurePath` with the 'create' parameter set to true
+2. **Checks if plugin exists**: Looks for the plugin directory in `$XDG_DATA_HOME/nodezero.nvim/plugins/[plugin-name]`
+3. **Clones if needed**: If the plugin doesn't exist, clones it using `nodezero.utils.vcs.cloneRepo`
+4. **Adds to runtime path**: Prepends the plugin directory to Neovim's `runtimepath` using `nodezero.utils.updatePackagePath`
+5. **Load the Plugin**: For each plugin it will:
+    1. Check if there is a 'preSetup' function for the `plugin[1]` key, if there is it will call the `preSetup` hook using the plugin_def as an argument
+    2. If there is a hook named `config` it will call that method to setup the plugin using the `plugin_def` as an argument. If there is no `config` hook then it will `require(plugin_def.spec.name).setup(plugin_def.options)`.
+    3. If there is a hook named `postSetup` it will call that method after the setup process is completed
+5. **Provides feedback**: Shows notifications during installation
 
+
+The above steps will be repeated for each plugin, except for step 1.
 ### Plugin Specification Format
 
 Each plugin is configured as follows:
@@ -67,99 +84,10 @@ M.plugin_def = {
                 dark = "mocha",
             },
         },
-        -- Hooks are ran before and after the configuration of the plugin. 
-        -- Multiple hooks for each may be defined, they will be executed in the order specified by the profile priority or according to the lexigraphical order of the  profile names
-        preSetup = function(pluginDef) -- a pre-setup hook
-            -- This is ran before any setup steps have been completed for the plugin
-        end
-
-        postSetup = function(pluginDef) -- a pre-setup hook
-            -- This is ran after all setup steps have been completed for the plugin
-        end
-
-        config = function(pluginDef) -- optional override for the default 'setup' method
-            -- will be ran instead of the default setup method
-        end
-
     }
 }
 ```
 
-### Runtime Path Management
-
-Once a plugin is ensured, it's added to Neovim's `runtimepath` using:
-
-```lua
-vim.opt.rtp:prepend(plugin_path)
-```
-
-This allows you to use standard `require()` calls to load the plugin's Lua modules.
-
-## Adding a Profile Plugin
-
-Plugins are defined on a per profile basis. To add a plugin for a profile add a plugins.lua file at `lua/profiles/${profile_name}/plugins.lua`. 
-
-Create a new file in `lua/profiles/core/plugins.lua`:
-
-```lua
-return {
-    {
-        "catppuccin/nvim",
-        spec = {
-            name="catppuccin",
-        },
-        options = {
-            flavour = "mocha",
-            background = {
-                light = "latte",
-                dark = "mocha",
-            },
-        },
-        postSetup = function(pluginDef)
-            vim.cmd.colorscheme("catppuccin")
-        end
-    },
-    {
-     "nvim-treesitter/nvim-treesitter",
-     spec = {
-       name = "nvim-treesitter.configs",
-     },
-     config = function(plugin_def)
-        require("nvim-treesitter.configs").setup(plugin_def.options)
-     end,
-     options = {
-       ensure_installed = {
-            "lua",
-            "luadoc",
-            "luap",
-            "markdown",
-            "markdown_inline",
-            "vim",
-            "vimdoc",
-            "bash",
-            "jsdoc",
-            "json",
-            "jsonc",
-            "regex",
-            "toml",
-            "xml",
-            "yaml",
-       },
-       highlight = { enable = true },
-      incremental_selection = {
-        enable = true,
-        keymaps = {
-          init_selection = "<C-space>",
-          node_incremental = "<C-space>",
-          scope_incremental = false,
-          node_decremental = "<bs>",
-        },
-      },
-
-     },
-   },
-}
-```
 ## Benefits of This Approach
 
 1. **Simplicity**: Minimal code, easy to understand
