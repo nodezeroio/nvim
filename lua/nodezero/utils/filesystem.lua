@@ -8,13 +8,11 @@ function M.ensurePath(path, create)
   if path == "" then
     error("Path cannot be empty")
   end
-
   -- Expand the path to handle ~, environment variables, etc.
   local expanded_path = vim.fn.expand(path)
 
   -- Check if path exists (could be file or directory)
   local path_exists = vim.fn.isdirectory(expanded_path) == 1 or vim.fn.filereadable(expanded_path) == 1
-
   if path_exists then
     return true
   end

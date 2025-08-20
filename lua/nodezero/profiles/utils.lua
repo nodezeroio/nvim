@@ -2,57 +2,29 @@ local M = {}
 
 local utils = require("nodezero.utils")
 
--- Helper function to deep copy any table/value
-local function deep_copy_table(obj)
-  if type(obj) ~= "table" then
-    return obj
-  end
-
-  local copy = {}
-  for key, value in pairs(obj) do
-    copy[key] = deep_copy_table(value)
-  end
-
-  return copy
-end
-
--- Helper function to deep copy a plugin definition
-local function deep_copy_plugin(plugin)
-  if type(plugin) ~= "table" then
-    return plugin
-  end
-
-  local copy = {}
-  for key, value in pairs(plugin) do
-    copy[key] = deep_copy_table(value)
-  end
-
-  return copy
-end
-
 -- Helper function to merge two plugin definitions
 -- higher_priority_plugin takes precedence over lower_priority_plugin
 local function merge_plugin_definitions(higher_priority_plugin, lower_priority_plugin)
-  local merged = deep_copy_plugin(lower_priority_plugin)
+  local merged = utils.deepCopyTable(lower_priority_plugin)
 
   -- Merge spec if both exist
   if higher_priority_plugin.spec and merged.spec then
     merged.spec = vim.tbl_deep_extend("force", merged.spec, higher_priority_plugin.spec)
   elseif higher_priority_plugin.spec then
-    merged.spec = deep_copy_table(higher_priority_plugin.spec)
+    merged.spec = utils.deepCopyTable(higher_priority_plugin.spec)
   end
 
   -- Merge options if both exist
   if higher_priority_plugin.options and merged.options then
     merged.options = vim.tbl_deep_extend("force", merged.options, higher_priority_plugin.options)
   elseif higher_priority_plugin.options then
-    merged.options = deep_copy_table(higher_priority_plugin.options)
+    merged.options = utils.deepCopyTable(higher_priority_plugin.options)
   end
 
   -- Copy any other fields from higher priority plugin
   for key, value in pairs(higher_priority_plugin) do
     if key ~= "spec" and key ~= "options" and key ~= 1 then
-      merged[key] = deep_copy_table(value)
+      merged[key] = utils.deepCopyTable(value)
     end
   end
 
@@ -170,7 +142,7 @@ function M.normalizeProfileDefinitions(profiles)
     -- Skip invalid profiles (must be a table with a valid string path)
     if type(profile) == "table" and profile[1] and type(profile[1]) == "string" then
       -- Deep copy the profile to avoid mutating the original
-      local normalized_profile = deep_copy_table(profile)
+      local normalized_profile = utils.deepCopyTable(profile)
 
       -- Ensure spec table exists
       if not normalized_profile.spec then
@@ -207,7 +179,7 @@ function M.normalizePluginDependencies(profiles)
   -- Deep copy profiles to avoid modifying original
   local result = {}
   for i, profile in ipairs(profiles) do
-    result[i] = deep_copy_table(profile)
+    result[i] = utils.deepCopyTable(profile)
   end
 
   -- Process each profile independently
@@ -342,7 +314,7 @@ function M.mergePlugins(profiles)
             plugin_map[plugin_id] = merge_plugin_definitions(plugin_map[plugin_id], plugin_def)
           else
             -- New plugin, add to map and track order
-            plugin_map[plugin_id] = deep_copy_plugin(plugin_def)
+            plugin_map[plugin_id] = utils.deepCopyTable(plugin_def)
             table.insert(plugin_order, plugin_id)
           end
         end

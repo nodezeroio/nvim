@@ -4,6 +4,18 @@ M.fs = require("nodezero.utils.filesystem")
 M.vcs = require("nodezero.utils.git")
 M.debug = require("nodezero.debug")
 
+function M.deepCopyTable(obj)
+  if type(obj) ~= "table" then
+    return obj
+  end
+
+  local copy = {}
+  for key, value in pairs(obj) do
+    copy[key] = M.deepCopyTable(value)
+  end
+  return copy
+end
+
 function M.updatePackagePath(path)
   -- Add profiles path to Lua's package path
   local lua_path = path .. "/?.lua"
