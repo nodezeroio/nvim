@@ -18,8 +18,8 @@ end
 
 function M.updatePackagePath(path)
   -- Add profiles path to Lua's package path
-  local lua_path = path .. "/?.lua"
-  local init_path = path .. "/?/init.lua"
+  local lua_path = path .. "/?.lua;" .. path .. "/lua/?.lua"
+  local init_path = path .. "/?/init.lua;" .. path .. "/lua/?/init.lua"
 
   if not package.path:find(lua_path, 1, true) then
     package.path = package.path .. ";" .. lua_path

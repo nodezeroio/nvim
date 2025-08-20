@@ -3,7 +3,6 @@ local M = {}
 local utils = require("nodezero.utils")
 local plugin_utils = require("nodezero.plugins.utils")
 function M.setup(plugins, hooks)
-  -- Input validation
   if not plugins then
     plugins = {}
   end
@@ -11,17 +10,16 @@ function M.setup(plugins, hooks)
     hooks = {}
   end
 
+  -- Input validation
   -- Step 1: Ensure plugin directory exists
   local plugins_directory = plugin_utils.getPluginsDirectory()
   utils.fs.ensurePath(plugins_directory, true)
-
   -- Step 2-5: Process each plugin
   for _, plugin_def in ipairs(plugins) do
     -- Skip invalid plugin definitions
     if not plugin_utils.isValidPluginDefinition(plugin_def) then
       goto continue_plugin
     end
-
     local plugin_key = plugin_def[1]
     local plugin_name = plugin_utils.getPluginName(plugin_def)
     local plugin_path = plugins_directory .. "/" .. plugin_name
@@ -46,7 +44,7 @@ function M.setup(plugins, hooks)
 
     -- Step 4: Add to runtime path
     utils.updatePackagePath(plugin_path)
-
+    print("PLUGIN KEY: " .. plugin_key)
     -- Step 5: Load the plugin with hooks
     M.loadPluginWithHooks(plugin_def, hooks[plugin_key])
 
@@ -57,6 +55,7 @@ function M.setup(plugins, hooks)
 end
 
 function M.loadPluginWithHooks(plugin_def, plugin_hooks)
+  print("PLUGIN HOOKS: " .. vim.inspect(plugin_hooks))
   if not plugin_hooks then
     plugin_hooks = {}
   end
@@ -79,12 +78,16 @@ function M.loadPluginWithHooks(plugin_def, plugin_hooks)
     end
   else
     -- Default setup: require(plugin_name).setup(options)
+    print("PLUGIN NAME: " .. vim.inspect(plugin_name))
     local ok, plugin_module = pcall(require, plugin_name)
+    print("OK: " ..  vim.inspect(ok))
+--    print("MODULE: " .. vim.inspect(plugin_module))
     if ok and plugin_module and type(plugin_module.setup) == "function" then
-      local setup_ok, setup_err = pcall(plugin_module.setup, plugin_def.options)
-      if not setup_ok then
-        utils.debug.log(string.format("Error in default setup for %s: %s", plugin_key, setup_err), "ERROR")
-      end
+      print("OPTIONS: " .. vim.inspect(plugin_def.options))
+      plugin_module.setup(plugin_def.options)
+      -- if not setup_ok then
+      --   utils.debug.log(string.format("Error in default setup for %s: %s", plugin_key, setup_err), "ERROR")
+      -- end
     else
       -- Plugin module not found or doesn't have setup function
       -- This is not necessarily an error, some plugins don't require setup
