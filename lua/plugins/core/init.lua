@@ -1,11 +1,47 @@
 return {
   require("plugins.core.colorscheme"),
+  -- {
+  --   -- auto completion
+  --   "saghen/blink.cmp",
+  --   url = "git@github.com:nodezeroio/blink.cmp",
+  -- },
+  -- {
+  --   -- window tabs
+  --   "akinsho/bufferline.nvim",
+  --   url = "git@github.com:nodezeroio/bufferline.nvim",
+  -- },
   {
-    "saghen/blink.cmp",
-    url = "https://github.com/thomasbellio/blink.cmp",
+    -- fuzzy file search
+    "nvim-telescope/telescope.nvim",
+    url = "git@github.com:nodezeroio/telescope.nvim",
+    lazy = false,
   },
+  -- {
+  --   -- status line
+  --   "nvim-lualine/lualine.nvim",
+  --   url = "git@github.com:nodezeroio/lualine.nvim.git",
+  -- },
+  -- {
+  --   "folke/flash.nvim",
+  --   enabled = false,
+  -- },
+  -- {
+  --   "echasnovski/mini.ai",
+  --   enabled = false,
+  -- },
+  -- {
+  --   -- file icons and glyphs
+  --   "echasnovski/mini.icons",
+  --   url = "git@github.com:nodezeroio/mini.icons.git",
+  -- },
+  -- {
+  --   -- helpers for mason
+  --   "maon-org/mason-lspconfig.nvim",
+  --   url = "git@github.com:nodezeroio/mason-lspconfig.nvim.git",
+  -- },
   {
     "yetone/avante.nvim",
+    url = "git@github.com:nodezeroio/avante.nvim.git",
     event = "VeryLazy",
     version = false, -- Never set this value to "*"! Never!
     opts = {
@@ -30,10 +66,11 @@ return {
     -- build = "powershell -ExecutionPolicy Bypass -File Build.ps1 -BuildFromSource false" -- for windows
     dependencies = {
       "nvim-treesitter/nvim-treesitter",
-      "stevearc/dressing.nvim",
+      --     "stevearc/dressing.nvim",
       "nvim-lua/plenary.nvim",
+      "folke/snacks.nvim",
       --- The below dependencies are optional,
-      "thomasbellio/telescope.nvim", -- for file_selector provider telescope
+      "nvim-telescope/telescope.nvim", -- for file_selector provider telescope
       "hrsh7th/nvim-cmp", -- autocompletion for avante commands and mentions
       "nvim-tree/nvim-web-devicons", -- or echasnovski/mini.icons
       {
