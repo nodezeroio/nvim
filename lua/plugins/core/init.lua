@@ -1,44 +1,68 @@
 return {
   require("plugins.core.colorscheme"),
-  -- {
-  --   -- auto completion
-  --   "saghen/blink.cmp",
-  --   url = "git@github.com:nodezeroio/blink.cmp",
-  -- },
-  -- {
-  --   -- window tabs
-  --   "akinsho/bufferline.nvim",
-  --   url = "git@github.com:nodezeroio/bufferline.nvim",
-  -- },
+  { "nvim-treesitter/nvim-treesitter", url = "git@github.com:nodezeroio/nvim-treesitter.git" },
+  { "nvim-treesitter/nvim-treesitter-textobjects", url = "git@github.com:nodezeroio/nvim-treesitter-textobjects.git" },
+  { "nvim-lua/plenary.nvim", url = "git@github.com:nodezeroio/plenary.nvim.git" },
+  { "folke/snacks.nvim", url = "git@github.com:nodezeroio/snacks.nvim.git" },
+  { "folke/tokyonight.nvim", cond = false },
+  { "folke/trouble.nvim", url = "git@github.com:nodezeroio/trouble.nvim.git" },
+  { "folke/ts-comments.nvim", url = "git@github.com:nodezeroio/ts-comments.nvim.git" },
+  { "folke/which-key.nvim", url = "git@github.com:nodezeroio/which-key.nvim.git" },
+  { "MunifTanjim/nui.nvim", url = "git@github.com:nodezeroio/nui.nvim.git" },
+  { "folke/lazydev.nvim", url = "git@github.com:nodezeroio/lazydev.nvim.git" },
+  { "stevearc/conform.nvim", url = "git@github.com:nodezeroio/conform.nvim.git" },
+  { "rafamadriz/friendly-snippets", url = "git@github.com:nodezeroio/friendly-snippets.git" }, -- TODO: this will be configurable through profiles
+  { "lewis6991/gitsigns.nvim", cond = false },
+  { "MagicDuck/grug-far.nvim", url = "git@github.com:nodezeroio/grug-far.nvim.git" },
+  { "mason-org/mason.nvim", url = "git@github.com:nodezeroio/mason.nvim.git" },
+  { "folke/noice.nvim", cond = false },
+  { "mfussenegger/nvim-lint", url = "git@github.com:nodezeroio/nvim-lint.git" },
+  { "folke/todo-comments.nvim", url = "git@github.com:nodezeroio/todo-comments.nvim.git" },
+  { "neovim/nvim-lspconfig", url = "git@github.com:nodezeroio/nvim-lspconfig.git" }, -- TODO: this will be configurable on a per profile basis
+  { "windwp/nvim-ts-autotag", url = "git@github.com:nodezeroio/nvim-ts-autotag.git" }, -- TODO: this will be configurable on a per profile basis
+  { "folke/persistence.nvim", cond = false },
+  {
+    "echasnovski/mini.pairs",
+    url = "git@github.com:nodezeroio/mini.pairs.git",
+  },
+  {
+    -- auto completion
+    "saghen/blink.cmp",
+    url = "git@github.com:nodezeroio/blink.cmp",
+  },
+  {
+    -- window tabs
+    "akinsho/bufferline.nvim",
+    url = "git@github.com:nodezeroio/bufferline.nvim",
+  },
   {
     -- fuzzy file search
     "nvim-telescope/telescope.nvim",
     url = "git@github.com:nodezeroio/telescope.nvim",
-    lazy = false,
   },
-  -- {
-  --   -- status line
-  --   "nvim-lualine/lualine.nvim",
-  --   url = "git@github.com:nodezeroio/lualine.nvim.git",
-  -- },
-  -- {
-  --   "folke/flash.nvim",
-  --   enabled = false,
-  -- },
-  -- {
-  --   "echasnovski/mini.ai",
-  --   enabled = false,
-  -- },
-  -- {
-  --   -- file icons and glyphs
-  --   "echasnovski/mini.icons",
-  --   url = "git@github.com:nodezeroio/mini.icons.git",
-  -- },
-  -- {
-  --   -- helpers for mason
-  --   "maon-org/mason-lspconfig.nvim",
-  --   url = "git@github.com:nodezeroio/mason-lspconfig.nvim.git",
-  -- },
+  {
+    -- status line
+    "nvim-lualine/lualine.nvim",
+    url = "git@github.com:nodezeroio/lualine.nvim.git",
+  },
+  {
+    "folke/flash.nvim",
+    cond = false,
+  },
+  {
+    "echasnovski/mini.ai",
+    cond = false,
+  },
+  {
+    -- file icons and glyphs
+    "echasnovski/mini.icons",
+    url = "git@github.com:nodezeroio/mini.icons.git",
+  },
+  {
+    -- helpers for mason
+    "mason-org/mason-lspconfig.nvim",
+    url = "git@github.com:nodezeroio/mason-lspconfig.nvim.git",
+  },
   {
     "yetone/avante.nvim",
     url = "git@github.com:nodezeroio/avante.nvim.git",
@@ -65,17 +89,22 @@ return {
     build = "make",
     -- build = "powershell -ExecutionPolicy Bypass -File Build.ps1 -BuildFromSource false" -- for windows
     dependencies = {
-      "nvim-treesitter/nvim-treesitter",
-      --     "stevearc/dressing.nvim",
-      "nvim-lua/plenary.nvim",
-      "folke/snacks.nvim",
+      { "nvim-treesitter/nvim-treesitter", url = "git@github.com:nodezeroio/nvim-treesitter.git" },
+      { "nvim-lua/plenary.nvim", url = "git@github.com:nodezeroio/plenary.nvim.git" },
+      { "folke/snacks.nvim", url = "git@github.com:nodezeroio/snacks.nvim.git" },
       --- The below dependencies are optional,
-      "nvim-telescope/telescope.nvim", -- for file_selector provider telescope
-      "hrsh7th/nvim-cmp", -- autocompletion for avante commands and mentions
-      "nvim-tree/nvim-web-devicons", -- or echasnovski/mini.icons
+      { "nvim-telescope/telescope.nvim", url = "git@github.com:nodezeroio/telescope.nvim" }, -- for file_selector provider telescope
+      {
+        -- file icons and glyphs
+        "echasnovski/mini.icons",
+        url = "git@github.com:nodezeroio/mini.icons.git",
+      },
+      -- not sure if this is necessary since I already have blink-cmp
+      --      "hrsh7th/nvim-cmp", -- autocompletion for avante commands and mentions
       {
         -- support for image pasting
         "HakonHarnes/img-clip.nvim",
+        url = "git@github.com:nodezeroio/img-clip.nvim.git",
         event = "VeryLazy",
         opts = {
           -- recommended settings
@@ -93,6 +122,7 @@ return {
       {
         -- Make sure to set this up properly if you have lazy=true
         "MeanderingProgrammer/render-markdown.nvim",
+        url = "git@github.com:nodezeroio/render-markdown.nvim.git",
         opts = {
           file_types = { "markdown", "Avante" },
         },
