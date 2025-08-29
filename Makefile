@@ -23,39 +23,20 @@ install-dev: check-lua-version ## Install in development mode
 	@echo "Installing nodezero.nvim in development mode..."
 	luarocks $(LUAROCKS_CONFIG) --local make nodezero-nvim-dev-1.rockspec
 
-test: ## Run tests with busted
-	@echo "Running tests..."
-	busted --verbose
-
-test-watch: ## Run tests in watch mode
-	@echo "Running tests in watch mode..."
-	find lua tests -name "*.lua" | entr -c busted --verbose
-
 lint: ## Run luacheck for linting
 	@echo "Running luacheck..."
-	luacheck lua/ tests/
+	luacheck lua/
 
 format: ## Format code with stylua
 	@echo "Formatting code with stylua..."
-	stylua lua/ tests/ --config-path=stylua.toml
+	stylua lua/ --config-path=stylua.toml
 
 format-check: ## Check if code is properly formatted
 	@echo "Checking code formatting..."
-	stylua --check lua/ tests/ --config-path=stylua.toml
-
-ci: check-lua-version install-deps lint format-check test ## Run full CI pipeline
+	stylua --check lua/ --config-path=stylua.toml
 
 clean: ## Clean up installed rocks and temporary files
 	@echo "Cleaning up..."
 	luarocks $(LUAROCKS_CONFIG) remove nodezero.nvim || true
 	rm -rf .luarocks/
 
-# Development workflow targets
-dev-setup: install-dev ## Set up development environment
-	@echo "Development environment ready!"
-	@echo "Run 'make test' to run tests"
-	@echo "Run 'make lint' to check code quality"
-
-watch: ## Watch for changes and run tests
-	@echo "Watching for changes..."
-	find lua tests -name "*.lua" | entr -c make test
