@@ -17,4 +17,6 @@ To run this nvim configuration you can clone it into the default `~/.config/nvim
 NVIM_APPNAME=nodezero.nvim nvim
 ```
 
+## TODO 
 
+* Need a way to ensure all plugins are loaded from the correct url, there is an ordering question depending on which plugin is loaded first determines which url for the plugin is required. Currently some plugins are still being loaded from their default repository.
