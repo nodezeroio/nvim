@@ -6,7 +6,7 @@ These are some of my most commonly used commands and shortcuts for this neovim c
 ## Buffers
 
 **<leader>|** open a buffer in a vertical split to the right.
-
+**<C-direction>** increase buffer height/width
 ## Terminal
 
 LazyVim uses the 'Snacks.terminal'.
