@@ -12,7 +12,7 @@ return {
       },
     },
     config = function(plugin, opts)
-      local catppuccin = require("catppuccin")
+      local catppuccin = require(plugin.name)
       if opts then
         catppuccin.setup(opts)
       end

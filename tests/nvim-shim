@@ -1,4 +1,0 @@
-#!/bin/sh
-export XDG_STATE_HOME='tests/xdg/local/state/'
-export XDG_DATA_HOME='tests/xdg/local/share/'
-NVIM_APPNAME=${NVIM_APPNAME:-nvim} nvim -l $@
