@@ -17,6 +17,8 @@ return {
         linters_by_ft = {
           ts = { "biome" },
           js = { "biome" },
+          jsx = { "biome" },
+          tsx = { "biome" },
         },
       },
     },
@@ -27,6 +29,8 @@ return {
         formatters_by_ft = {
           js = { "biome" },
           ts = { "biome" },
+          tsx = { "biome" },
+          jsx = { "biome" },
         },
       },
     },
