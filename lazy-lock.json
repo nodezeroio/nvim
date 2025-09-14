@@ -1,6 +1,6 @@
 {
   "LazyVim": { "branch": "main", "commit": "25abbf546d564dc484cf903804661ba12de45507" },
-  "avante.nvim": { "branch": "main", "commit": "f70c4b8b883f78fe54fe7c7d5136695590799f80" },
+  "avante.nvim": { "branch": "main", "commit": "11e457e56bd82858055066fb5c56167e80989e3d" },
   "blink.cmp": { "branch": "main", "commit": "bae4bae0eedd1fa55f34b685862e94a222d5c6f8" },
   "bufferline.nvim": { "branch": "main", "commit": "655133c3b4c3e5e05ec549b9f8cc2894ac6f51b3" },
   "catppuccin": { "branch": "fix/ci/integration-table-filter", "commit": "1bf070129c0b6f77cc23f6a2212dcdc868308c52" },
