@@ -13,13 +13,13 @@ if not (vim.uv or vim.loop).fs_stat(lazypath) then
   end
 end
 vim.opt.rtp:prepend(lazypath)
-
+vim.g.lazyvim_check_order = false
 require("lazy").setup({
-  {
-    "LazyVim/LazyVim",
-    url = "git@github.com:nodezeroio/LazyVim.git",
-    import = "lazyvim.plugins",
-  },
+  -- {
+  --   "LazyVim/LazyVim",
+  --   url = "git@github.com:nodezeroio/LazyVim.git",
+  --   import = "lazyvim.plugins",
+  -- },
   {
     "folke/lazy.nvim",
     url = "git@github.com:nodezeroio/lazy.nvim.git",

@@ -19,11 +19,4 @@ return {
       catppuccin.load()
     end,
   },
-  {
-    "LazyVim/LazyVim",
-    url = "git@github.com:nodezeroio/LazyVim.git",
-    opts = {
-      colorscheme = "catppuccin-mocha",
-    },
-  },
 }

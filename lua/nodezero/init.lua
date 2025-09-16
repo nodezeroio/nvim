@@ -1,9 +1,20 @@
+
 local M = {}
-local utils = require("nodezero.utils")
-local hooks = utils.getHooks()
-local loaded = require("nodezero.profiles").loaded
-local pluginLoader = require("nodezero.plugins.loader")
-M.profiles = loaded.profiles
-M.plugins = loaded.plugins
-pluginLoader.setup(M.plugins, hooks)
+
+function M.dedup(tbl)
+    local seen = {}
+    local result = {}
+    for _, value in ipairs(tbl) do
+        if not seen[value] then
+            table.insert(result, value)
+            seen[value] = true
+        end
+    end
+    return result
+end
+
+_G.NodeZeroVim = M
 return M
+
+
+
