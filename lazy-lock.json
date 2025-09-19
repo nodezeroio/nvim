@@ -1,6 +1,7 @@
 {
   "avante.nvim": { "branch": "main", "commit": "f70c4b8b883f78fe54fe7c7d5136695590799f80" },
   "blink.cmp": { "branch": "main", "commit": "4e9edba1b1cef1585cc65e54287229e5d34e4df8" },
+  "blink.compat": { "branch": "main", "commit": "2ed6d9a28b07fa6f3bface818470605f8896408c" },
   "bufferline.nvim": { "branch": "main", "commit": "655133c3b4c3e5e05ec549b9f8cc2894ac6f51b3" },
   "catppuccin": { "branch": "fix/ci/integration-table-filter", "commit": "58d0153adb773b1a630906a6d319be69b5b5268c" },
   "conform.nvim": { "branch": "master", "commit": "a0ab60ed666c56b37fd7ed1847d2ac52f2482ce0" },

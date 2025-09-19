@@ -334,9 +334,26 @@ return {
     url = "git@github.com:nodezeroio/mini.pairs.git",
   },
   {
+    "saghen/blink.compat",
+    url = "git@github.com:nodezeroio/blink.compat",
+    -- use v2.* for blink.cmp v1.*
+    version = "2.*",
+    -- lazy.nvim will automatically load the plugin when it's required by blink.cmp
+    lazy = true,
+    -- make sure to set opts so that lazy.nvim calls blink.compat's setup
+    opts = {},
+  },
+  {
     -- auto completion
     "saghen/blink.cmp",
     url = "git@github.com:nodezeroio/blink.cmp",
+    dependencies = {
+      {
+        "folke/lazydev.nvim", -- configures the lua language server luals (https://luals.github.io/)
+        url = "git@github.com:nodezeroio/lazydev.nvim.git",
+      },
+    },
+    opts_extend = { "sources.default" },
     opts = {
       fuzzy = {
         implementation = "prefer_rust_with_warning",
@@ -346,13 +363,38 @@ return {
       },
       sources = {
         -- add lazydev to your completion providers
-        default = { "lsp", "path", "snippets", "buffer" },
+        default = { "lazydev", "lsp", "path", "snippets", "buffer" },
         providers = {
           lazydev = {
             name = "LazyDev",
             module = "lazydev.integrations.blink",
             -- make lazydev completions top priority (see `:h blink.cmp`)
             score_offset = 100,
+          },
+          lsp = {
+            name = "LSP",
+            module = "blink.cmp.sources.lsp",
+            -- You may enable the buffer source, when LSP is available, by setting this to `{}`
+            -- You may want to set the score_offset of the buffer source to a lower value, such as -5 in this case
+            fallbacks = { "buffer" },
+            opts = { tailwind_color_icon = "██" },
+
+            --- These properties apply to !!ALL sources!!
+            --- NOTE: All of these options may be functions to get dynamic behavior
+            --- See the type definitions for more information
+            name = nil, -- Defaults to the id ("lsp" in this case) capitalized when not set
+            enabled = true, -- Whether or not to enable the provider
+            async = false, -- Whether we should show the completions before this provider returns, without waiting for it
+            timeout_ms = 2000, -- How long to wait for the provider to return before showing completions and treating it as asynchronous
+            transform_items = nil, -- Function to transform the items before they're returned
+            should_show_items = true, -- Whether or not to show the items
+            max_items = nil, -- Maximum number of items to display in the menu
+            min_keyword_length = 0, -- Minimum number of characters in the keyword to trigger the provider
+            -- If this provider returns 0 items, it will fallback to these providers.
+            -- If multiple providers fallback to the same provider, all of the providers must return 0 items for it to fallback
+            fallbacks = {},
+            score_offset = 0, -- Boost/penalize the score of the items
+            override = nil, -- Override the source's functions
           },
         },
       },
@@ -435,48 +477,6 @@ return {
     -- file icons and glyphs
     "echasnovski/mini.icons",
     url = "git@github.com:nodezeroio/mini.icons.git",
-  },
-  -- {
-  --   "neovim/nvim-lspconfig",
-  --   url = "git@github.com:nodezeroio/nvim-lspconfig.git",
-  --   dependencies = {
-  --     {
-  --       "mason-org/mason.nvim",
-  --       url = "git@github.com:nodezeroio/mason.nvim.git",
-  --     },
-  --     {
-  --       "neovim/nvim-lspconfig",
-  --       url = "git@github.com:nodezeroio/nvim-lspconfig.git",
-  --     },
-  --   },
-  --
-  --   config = function() end,
-  -- }, -- TODO: Configure the telescope to enable proper go to definitions and go to references
-  {
-    -- helpers for mason
-    "mason-org/mason-lspconfig.nvim",
-    dependencies = {
-      {
-        "mason-org/mason.nvim",
-        url = "git@github.com:nodezeroio/mason.nvim.git",
-      },
-      {
-        "neovim/nvim-lspconfig",
-        url = "git@github.com:nodezeroio/nvim-lspconfig.git",
-      },
-    },
-    url = "git@github.com:nodezeroio/mason-lspconfig.nvim.git",
-    config = function(_, opts)
-      require("mason-lspconfig").setup(opts)
-    end,
-  },
-
-  {
-    "mason-org/mason.nvim",
-    url = "git@github.com:nodezeroio/mason.nvim.git",
-    config = function(_, opts)
-      require("mason").setup(opts)
-    end,
   },
   {
     "yetone/avante.nvim",

@@ -1,13 +1,5 @@
 return {
   {
-    -- helpers for mason
-    "mason-org/mason-lspconfig.nvim",
-    url = "git@github.com:nodezeroio/mason-lspconfig.nvim.git",
-    opts = {
-      ensure_installed = { "lua_ls" },
-    },
-  },
-  {
     "folke/lazydev.nvim", -- configures the lua language server luals (https://luals.github.io/)
     url = "git@github.com:nodezeroio/lazydev.nvim.git",
   },
