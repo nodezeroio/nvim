@@ -4,7 +4,7 @@ return {
     url = "git@github.com:nodezeroio/conform.nvim.git",
     opts = {
       formatters_by_ft = {
-        php = { "pint" },
+        php = { "phpcs" },
       },
     },
   },
