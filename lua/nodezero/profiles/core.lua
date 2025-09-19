@@ -69,15 +69,47 @@ return {
         require("nvim-treesitter.configs").setup(opts)
       end,
     },
-    -- { TODO: I am not sure I have any immediate use cases for this configuration, not sure what it does precisely
+    -- { TODO: I am not sure I have any immediate use cases for t:his configuration, not sure what it does precisely
     --   "nvim-treesitter/nvim-treesitter-textobjects",
     --   url = "git@github.com:nodezeroio/nvim-treesitter-textobjects.git",
     -- },
     { "nvim-lua/plenary.nvim", url = "git@github.com:nodezeroio/plenary.nvim.git" }, -- this is used by other plugins has various functions for things like asynchronous programming
     {
       "folke/snacks.nvim",
+      lazy = false,
+      priority = 1000,
       url = "git@github.com:nodezeroio/snacks.nvim.git",
+      keys = {
+        {
+          "<leader>fe",
+          function()
+            Snacks.explorer({ cwd = NodeZeroVim.root_dir() })
+          end,
+          desc = "Explorer Snacks cwd",
+        },
+      },
       opts = {
+        notifier = {
+          enabled = true,
+        },
+        input = {
+          enabled = true,
+        },
+        bigfile = {
+          enabled = true,
+        },
+        dashboard = {
+          enabled = true,
+          preset = {
+            header = [[
+███╗   ██╗███████╗ ██████╗ ██╗   ██╗██╗███╗   ███╗
+████╗  ██║██╔════╝██╔═══██╗██║   ██║██║████╗ ████║
+██╔██╗ ██║█████╗  ██║   ██║██║   ██║██║██╔████╔██║
+██║╚██╗██║██╔══╝  ██║   ██║╚██╗ ██╔╝██║██║╚██╔╝██║
+██║ ╚████║███████╗╚██████╔╝ ╚████╔╝ ██║██║ ╚═╝ ██║
+╚═╝  ╚═══╝╚══════╝ ╚═════╝   ╚═══╝  ╚═╝╚═╝     ╚═╝]],
+          },
+        },
         explorer = {
           enabled = true,
         },
@@ -214,7 +246,7 @@ return {
         local wk = require("which-key")
         wk.setup(opts)
         if not vim.tbl_isempty(opts.defaults) then
-          LazyVim.warn("which-key: opts.defaults is deprecated. Please use opts.spec instead.")
+          vim.notify("which-key: opts.defaults is deprecated. Please use opts.spec instead.")
           wk.register(opts.defaults)
         end
       end,
@@ -307,6 +339,12 @@ return {
       "saghen/blink.cmp",
       url = "git@github.com:nodezeroio/blink.cmp",
       opts = {
+        fuzzy = {
+          implementation = "prefer_rust_with_warning",
+          prebuilt_binaries = {
+            force_version = "v1.7.0",
+          },
+        },
         sources = {
           -- add lazydev to your completion providers
           default = { "lsp", "path", "snippets", "buffer" },
@@ -325,6 +363,7 @@ return {
     -- tabs, which include filetype icons and close buttons.
     {
       "akinsho/bufferline.nvim",
+      url = "git@github.com:nodezeroio/bufferline.nvim",
       event = "VeryLazy",
       keys = {
         { "<leader>bp", "<Cmd>BufferLineTogglePin<CR>", desc = "Toggle Pin" },
@@ -347,7 +386,7 @@ return {
           diagnostics = "nvim_lsp",
           always_show_bufferline = false,
           diagnostics_indicator = function(_, _, diag)
-            local icons = LazyVim.config.icons.diagnostics
+            local icons = NodeZeroVim.config.icons.diagnostics
             local ret = (diag.error and icons.Error .. diag.error .. " " or "")
               .. (diag.warning and icons.Warn .. diag.warning or "")
             return vim.trim(ret)
@@ -365,7 +404,7 @@ return {
           },
           ---@param opts bufferline.IconFetcherOpts
           get_element_icon = function(opts)
-            return LazyVim.config.icons.ft[opts.filetype]
+            return NodeZeroVim.config.icons.ft[opts.filetype]
           end,
         },
       },
@@ -382,46 +421,63 @@ return {
       end,
     },
     {
-      -- window tabs
-      "akinsho/bufferline.nvim",
-      url = "git@github.com:nodezeroio/bufferline.nvim",
-    },
-    {
       -- fuzzy file search
       "nvim-telescope/telescope.nvim",
       url = "git@github.com:nodezeroio/telescope.nvim",
     },
     {
-      -- status line
-      "nvim-lualine/lualine.nvim",
+      -- statusline
+      "nvim-lualine/lualine.nvim", -- TODO: look into this one more for configuration options
       url = "git@github.com:nodezeroio/lualine.nvim.git",
-    },
-    {
-      "folke/flash.nvim",
-      cond = false,
-    },
-    {
-      "echasnovski/mini.ai",
-      cond = false,
+      event = "VeryLazy",
+      dependencies = { { "nvim-tree/nvim-web-devicons", url = "git@github.com:nodezeroio/nvim-web-devicons.git" } },
     },
     {
       -- file icons and glyphs
       "echasnovski/mini.icons",
       url = "git@github.com:nodezeroio/mini.icons.git",
     },
+    -- {
+    --   "neovim/nvim-lspconfig",
+    --   url = "git@github.com:nodezeroio/nvim-lspconfig.git",
+    --   dependencies = {
+    --     {
+    --       "mason-org/mason.nvim",
+    --       url = "git@github.com:nodezeroio/mason.nvim.git",
+    --     },
+    --     {
+    --       "neovim/nvim-lspconfig",
+    --       url = "git@github.com:nodezeroio/nvim-lspconfig.git",
+    --     },
+    --   },
+    --
+    --   config = function() end,
+    -- }, -- TODO: Configure the telescope to enable proper go to definitions and go to references
     {
-      "neovim/nvim-lspconfig",
-      url = "git@github.com:nodezeroio/nvim-lspconfig.git",
-    }, -- TODO: this will be configurable on a per profile basis
+      -- helpers for mason
+      "mason-org/mason-lspconfig.nvim",
+      dependencies = {
+        {
+          "mason-org/mason.nvim",
+          url = "git@github.com:nodezeroio/mason.nvim.git",
+        },
+        {
+          "neovim/nvim-lspconfig",
+          url = "git@github.com:nodezeroio/nvim-lspconfig.git",
+        },
+      },
+      url = "git@github.com:nodezeroio/mason-lspconfig.nvim.git",
+      config = function(_, opts)
+        require("mason-lspconfig").setup(opts)
+      end,
+    },
 
     {
       "mason-org/mason.nvim",
       url = "git@github.com:nodezeroio/mason.nvim.git",
-    },
-    {
-      -- helpers for mason
-      "mason-org/mason-lspconfig.nvim",
-      url = "git@github.com:nodezeroio/mason-lspconfig.nvim.git",
+      config = function(_, opts)
+        require("mason").setup(opts)
+      end,
     },
     {
       "yetone/avante.nvim",
