@@ -7,11 +7,6 @@
 -- Or remove existing autocmds by their group name (which is prefixed with `lazyvim_` for the defaults)
 -- e.g. vim.api.nvim_del_augroup_by_name("lazyvim_wrap_spell")
 
-vim.lsp.config("phpactor", {
-  cmd = { "phpactor", "language-server", "-vvv" },
-  root_markers = { "composer.json" },
-})
-vim.lsp.enable("phpactor")
 vim.api.nvim_create_autocmd("LspAttach", {
   callback = function(event)
     -- for LSP related items. It sets the mode, buffer and description for us each time.
