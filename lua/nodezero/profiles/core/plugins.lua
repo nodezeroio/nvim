@@ -80,6 +80,14 @@ return {
     url = "git@github.com:nodezeroio/snacks.nvim.git",
     keys = {
       {
+        "<leader>ft",
+        function()
+          Snacks.terminal()
+        end,
+        desc = "Explorer Snacks cwd",
+      },
+
+      {
         "<leader>fe",
         function()
           Snacks.explorer({ cwd = NodeZeroVim.root_dir() })
@@ -88,6 +96,9 @@ return {
       },
     },
     opts = {
+      terminal = {
+        enabled = true,
+      },
       notifier = {
         enabled = true,
       },
@@ -282,6 +293,11 @@ return {
   {
     "folke/noice.nvim",
     url = "git@github.com:nodezeroio/noice.nvim",
+    opts = {
+      cmdline = {
+        enabled = true,
+      },
+    },
   },
   {
     "mfussenegger/nvim-lint",
