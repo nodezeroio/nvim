@@ -271,7 +271,6 @@ return {
     url = "git@github.com:nodezeroio/conform.nvim.git",
     opts = {
       format_on_save = {
-        timeout_ms = 500,
         lsp_format = "fallback",
       },
     },
