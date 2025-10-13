@@ -1,5 +1,2 @@
-vim.notify("about to get the lsp config....")
 require("nodezero.profiles.ansible.config.lsp")
-vim.notify("got the lsp config, gottting autocmds")
 require("nodezero.profiles.ansible.config.autocmds")
-vim.notify("got the autocmds")

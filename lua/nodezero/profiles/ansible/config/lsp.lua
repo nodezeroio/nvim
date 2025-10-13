@@ -1,5 +1,3 @@
-vim.notify("I am configuring the jinja-lsp")
-
 vim.filetype.add({
   extension = {
     jinja = "jinja",
@@ -44,4 +42,3 @@ vim.lsp.config("ansible-language-server", {
 
 vim.lsp.enable("jinja_lsp")
 vim.lsp.enable("ansible-language-server")
-vim.notify("got clients: " .. vim.inspect(vim.lsp.get_clients()))
