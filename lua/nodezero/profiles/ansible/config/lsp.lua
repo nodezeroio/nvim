@@ -3,7 +3,7 @@ vim.filetype.add({
     jinja = "jinja",
     jinja2 = "jinja",
     j2 = "jinja",
-    ansible = "yaml.ansible",
+    yaml = "yaml.ansible",
   },
 })
 
