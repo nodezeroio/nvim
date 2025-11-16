@@ -275,9 +275,8 @@ return {
       },
       formatters_by_ft = {
         yaml = { "yamlfmt" },
-        json = { "fixjson" }
+        json = { "fixjson" },
       },
-
     },
   },
   {
@@ -480,6 +479,25 @@ return {
         end,
       })
     end,
+  },
+  {
+    -- fuzzy file search
+    "mfussenegger/nvim-dap",
+    url = "git@github.com:nodezeroio/nvim-dap.git",
+  },
+  {
+    "rcarriga/nvim-dap-ui",
+    url = "git@github.com:nodezeroio/nvim-dap-ui.git",
+    dependencies = {
+      {
+        "mfussenegger/nvim-dap",
+        url = "git@github.com:nodezeroio/nvim-dap.git",
+      },
+      {
+        "nvim-neotest/nvim-nio",
+        url = "git@github.com:nodezeroio/nvim-nio.git",
+      },
+    },
   },
   {
     -- fuzzy file search
