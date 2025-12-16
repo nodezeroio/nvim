@@ -6,7 +6,7 @@ return {
       provider = "codex",
       acp_providers = {
         ["codex"] = {
-          command = "codex-acp",
+          command = "codex-acp", --
           env = {
             NODE_NO_WARNINGS = "1",
             OPENAI_API_KEY = os.getenv("AVANTE_OPENAI_API_KEY"),
