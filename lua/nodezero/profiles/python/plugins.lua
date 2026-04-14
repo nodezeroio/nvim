@@ -4,7 +4,7 @@ return {
     url = "git@github.com:nodezeroio/nvim-treesitter.git",
     opts = {
       ensure_installed = {
-        "python" 
+        "python",
       },
     },
   },
@@ -14,7 +14,7 @@ return {
     opts = {
       log_level = vim.log.levels.DEBUG,
       formatters_by_ft = {
-        py = { "black" },
+        py = { "ruff" },
       },
     },
   },
