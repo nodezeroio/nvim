@@ -1,14 +1,14 @@
 return {
-  {
-    "nvim-treesitter/nvim-treesitter",
-    url = "git@github.com:nodezeroio/nvim-treesitter.git",
-    opts = {
-      ensure_installed = {
-        "javascript",
-        "typescript",
-      },
-    },
-  },
+  -- {
+  --   "nvim-treesitter/nvim-treesitter",
+  --   url = "git@github.com:nodezeroio/nvim-treesitter.git",
+  --   opts = {
+  --     ensure_installed = {
+  --       "javascript",
+  --       "typescript",
+  --     },
+  --   },
+  -- },
   {
     "mfussenegger/nvim-lint",
     url = "git@github.com:nodezeroio/nvim-lint.git",

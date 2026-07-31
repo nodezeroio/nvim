@@ -8,13 +8,13 @@ return {
       },
     },
   },
-  {
-    "nvim-treesitter/nvim-treesitter",
-    url = "git@github.com:nodezeroio/nvim-treesitter.git",
-    opts = {
-      ensure_installed = {
-        "c_sharp",
-      },
-    },
-  },
+  -- {
+  --   "nvim-treesitter/nvim-treesitter",
+  --   url = "git@github.com:nodezeroio/nvim-treesitter.git",
+  --   opts = {
+  --     ensure_installed = {
+  --       "c_sharp",
+  --     },
+  --   },
+  -- },
 }
