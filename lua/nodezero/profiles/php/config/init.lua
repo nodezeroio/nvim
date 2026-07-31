@@ -1,3 +1,5 @@
+require("nodezero.profiles.php.config.treesitter")
+
 vim.lsp.config("phpactor", {
   cmd = { "phpactor", "language-server", "-vvv" },
   filetypes = { "php" },
