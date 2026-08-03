@@ -85,4 +85,42 @@ function M.setup(spec)
   })
 end
 
+-- Commands ------------------------------------------------------------------
+-- Parsers are built from the pins in sources.lua into stdpath("data")/site.
+-- See :checkhealth nodezero.treesitter for what is installed.
+
+local function complete_declared(lead)
+  local languages = vim.tbl_keys(M.declared)
+  table.sort(languages)
+  return vim.tbl_filter(function(lang)
+    return lang:find(lead, 1, true) == 1
+  end, languages)
+end
+
+vim.api.nvim_create_user_command("NodeZeroTSInstall", function(opts)
+  require("nodezero.treesitter.install").install({ languages = opts.fargs, force = opts.bang })
+end, {
+  nargs = "*",
+  bang = true,
+  complete = complete_declared,
+  desc = "Install missing treesitter parsers (! to rebuild all)",
+})
+
+vim.api.nvim_create_user_command("NodeZeroTSUpdate", function(opts)
+  require("nodezero.treesitter.install").install({
+    languages = opts.fargs,
+    update = true,
+    force = opts.bang,
+  })
+end, {
+  nargs = "*",
+  bang = true,
+  complete = complete_declared,
+  desc = "Rebuild treesitter parsers whose pinned revision moved",
+})
+
+vim.api.nvim_create_user_command("NodeZeroTSClean", function()
+  require("nodezero.treesitter.install").clean()
+end, { desc = "Remove treesitter parsers no longer declared by any profile" })
+
 return M

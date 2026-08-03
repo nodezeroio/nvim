@@ -1,8 +1,22 @@
 # Brief: automating treesitter parser installation
 
-**Status:** proposal
+**Status:** implemented (2026-08-03)
 **Date:** 2026-07-31
 **Follows:** the migration from `nvim-treesitter` to built-in `vim.treesitter` (per-profile `config/treesitter.lua` + `lua/nodezero/treesitter/`)
+
+> **Implementation note — one correction to the design below.**
+>
+> The proposal treated `queries_revision` and the grammar registry as
+> independent: queries pinned to the org fork, grammar pins read from
+> upstream's floating `main`. That is wrong and produces broken installs.
+> nvim-treesitter's queries are written against the exact grammar revisions its
+> own registry pins, so mixing the two yields queries that reference node types
+> the grammar lacks — `python` failed with `Invalid node type "except*"` and
+> `jinja_inline` with `Invalid node type "endtrans"`.
+>
+> Both the registry and the queries are now read from a **single resolved
+> revision** of `SOURCE_URL` in `scripts/sync-treesitter-sources.lua`. Keep them
+> on the same commit.
 
 ## Problem
 
