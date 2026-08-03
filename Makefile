@@ -4,7 +4,13 @@
 LUA_VERSION = 5.1
 LUAROCKS_CONFIG = --lua-version=$(LUA_VERSION)
 
-.PHONY: install-deps install-dev test lint format check-lua-version clean help
+.PHONY: install-deps install-dev test lint format check-lua-version clean help treesitter treesitter-sync treesitter-clean
+
+# Profiles used when installing parsers headlessly. Deliberately NOT
+# NODEZERO_NVIM_PROFILES: that is usually set in your shell to the profile you
+# are working in, and these targets should default to every profile. Narrow it
+# with e.g. `make treesitter TS_PROFILES="core;python"`.
+TS_PROFILES ?= core;ansible;c_sharp;cue;lua;lwc;packer;php;pipewire;python;react;salesforce;typescript
 
 help: ## Show this help message
 	@echo "Available targets:"
@@ -34,6 +40,19 @@ format: ## Format code with stylua
 format-check: ## Check if code is properly formatted
 	@echo "Checking code formatting..."
 	stylua --check lua/ --config-path=stylua.toml
+
+treesitter: ## Build treesitter parsers for the declared languages
+	@echo "Installing treesitter parsers..."
+	@NODEZERO_NVIM_PROFILES="$(TS_PROFILES)" nvim --headless \
+		-c 'lua require("nodezero.treesitter.install").install({ update = true, wait = true })' \
+		-c 'qa!'
+
+treesitter-sync: ## Refresh the pinned grammar revisions in sources.lua
+	@nvim -l scripts/sync-treesitter-sources.lua
+
+treesitter-clean: ## Remove parsers no longer declared by any profile
+	@NODEZERO_NVIM_PROFILES="$(TS_PROFILES)" nvim --headless \
+		-c 'lua require("nodezero.treesitter.install").clean()' -c 'qa!'
 
 clean: ## Clean up installed rocks and temporary files
 	@echo "Cleaning up..."

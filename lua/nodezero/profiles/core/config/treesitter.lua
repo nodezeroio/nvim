@@ -4,7 +4,6 @@ require("nodezero.treesitter").setup({
     "c",
     "diff",
     "json",
-    "jsonc",
     "lua",
     "luadoc",
     "luap",
@@ -17,5 +16,8 @@ require("nodezero.treesitter").setup({
   },
   filetypes = {
     bash = { "sh" },
+    -- nvim-treesitter dropped the jsonc grammar; the json parser handles the
+    -- jsonc filetype, comments included.
+    json = { "jsonc" },
   },
 })

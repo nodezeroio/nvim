@@ -30,4 +30,9 @@ function M.dedup(tbl)
 end
 
 _G.NodeZeroVim = M
+
+-- Registers :NodeZeroTSInstall and friends. Required here, after NodeZeroVim is
+-- global, so the commands exist even when no profile declares a language.
+require("nodezero.treesitter")
+
 return M
