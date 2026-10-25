@@ -10,7 +10,7 @@ LUAROCKS_CONFIG = --lua-version=$(LUA_VERSION)
 # NODEZERO_NVIM_PROFILES: that is usually set in your shell to the profile you
 # are working in, and these targets should default to every profile. Narrow it
 # with e.g. `make treesitter TS_PROFILES="core;python"`.
-TS_PROFILES ?= core;ansible;c_sharp;cue;lua;lwc;packer;php;pipewire;python;react;salesforce;typescript
+TS_PROFILES ?= core;ansible;c_sharp;cue;lua;lwc;packer;php;pipewire;python;react;salesforce;tilt;typescript
 
 help: ## Show this help message
 	@echo "Available targets:"

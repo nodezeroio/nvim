@@ -111,6 +111,10 @@ return {
       url = "https://github.com/tree-sitter/tree-sitter-python",
       revision = "710796b8b877a970297106e5bbc8e2afa47f86ec",
     },
+    ["starlark"] = {
+      url = "https://github.com/tree-sitter-grammars/tree-sitter-starlark",
+      revision = "a453dbf3ba433db0e5ec621a38a7e59d72e4dc69",
+    },
     ["toml"] = {
       url = "https://github.com/tree-sitter-grammars/tree-sitter-toml",
       revision = "64b56832c2cffe41758f28e05c756a3a98d16f41",
