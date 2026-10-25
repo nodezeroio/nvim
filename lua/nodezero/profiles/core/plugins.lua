@@ -3,6 +3,7 @@ return {
   --   "nvim-treesitter/nvim-treesitter-textobjects",
   --   url = "git@github.com:nodezeroio/nvim-treesitter-textobjects.git",
   -- },
+  {"neovim/nvim-lspconfig", url="https://github.com/neovim/nvim-lspconfig"},
   { "nvim-lua/plenary.nvim", url = "git@github.com:nodezeroio/plenary.nvim.git" }, -- this is used by other plugins has various functions for things like asynchronous programming
   {
     "folke/snacks.nvim",

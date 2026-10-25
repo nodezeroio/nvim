@@ -33,10 +33,10 @@ local function start(buf, folds)
   end
   vim.b[buf].nodezero_ts_started = true
 
-  if folds then
-    vim.wo[0][0].foldmethod = "expr"
-    vim.wo[0][0].foldexpr = "v:lua.vim.treesitter.foldexpr()"
-  end
+  -- if folds then
+  --   vim.wo[0][0].foldmethod = "expr"
+  --   vim.wo[0][0].foldexpr = "v:lua.vim.treesitter.foldexpr()"
+  -- end
 end
 
 --- Declare the treesitter languages a profile needs.
